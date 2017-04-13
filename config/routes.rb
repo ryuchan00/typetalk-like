@@ -23,4 +23,10 @@ Rails.application.routes.draw do
   resources :relationships, only: [:create, :destroy]
   # 投稿のお気に入り機能
   resources :favoriteposts, only: [:create, :destroy]
+
+  #typetalk用
+  get 'topic', to: 'topics#new'
+  post 'topic', to: 'topics#create'
+  delete 'topic/destroy', to: 'sessions#destroy'
+
 end

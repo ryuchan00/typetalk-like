@@ -15,7 +15,11 @@ class UsersController < ApplicationController
     require 'net/https'
     require 'uri'
     require 'json'
+    require 'time'
 
+    client_id = ENV['CLIENT_ID']
+    client_secret = ENV['CLIENT_SECRET']
+    topic_id = '40628'
     msg = 'Hello!'
 
 # setup a http client
@@ -39,19 +43,25 @@ class UsersController < ApplicationController
       # puts post['account']['fullName']
       # puts post['message']
       # puts post['likes'].count
-      p post
       if post['likes'].count != 0 then
+        created_time = post['createdAt']
+        created_time_to_time = Time.parse(created_time).in_time_zone
+        puts created_time_to_time
+
         post_data = {
             "name" => post['account']['fullName'],
             "message" => post['message'],
+
             "like" => post['likes'].count,
             "imageUrl" => post['account']['imageUrl'],
-            "created_at" => post['createdAt']
+            "created_at" => created_time_to_time.to_s
         }
         puts post['account']['imageUrl']
         @posts.push(post_data)
       end
+
     }
+    puts Time.now.in_time_zone
   end
 
   def new
