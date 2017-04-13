@@ -1,0 +1,17 @@
+<% if current_user.favorite_now?(typetalk) %>
+  <%= form_for(current_user.favoriteposts.find_by(user_id: current_user.id, typetalk_id: typetalk.id), html: { method: :delete }) do |f| %>
+    <%= hidden_field_tag :favorite_post_id, typetalk.id %>
+    <%= button_tag( class: "btn btn-default btn-sm active") do %>
+      <%= content_tag :span, "お気に入り", class: "glyphicon glyphicon-star" %>
+    <% end %>
+    <%#= f.submit '★', class: 'btn btn-danger btn-xs' %>
+  <% end %>
+<% else %>
+  <%= form_for(current_user.favoriteposts.build) do |f| %>
+    <%= hidden_field_tag :favorite_post_id, typetalk.id %>
+    <%= button_tag( class: "btn btn-default btn-sm") do %>
+      <%= content_tag :span, "お気に入り", class: "glyphicon glyphicon-star" %>
+    <% end %>
+    <%#= f.submit '☆', class: 'btn btn-primary btn-xs' %>
+  <% end %>
+<% end %>

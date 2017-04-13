@@ -1,0 +1,26 @@
+<ul class="media-list">
+  <% typetalks.each do |typetalk| %>
+    <% user = typetalk.user %>
+    <li class="media">
+      <div class="media-left">
+        <img class="media-object img-rounded" src="<%= gravatar_url(current_user, options = { size: 50 }) %>" alt="">
+      </div>
+      <div class="media-body">
+        <div>
+          <%= link_to user.name, user_path(user) %> <span class="text-muted">posted at <%= typetalk.created_at %></span>
+        </div>
+        <div>
+          <p><%= typetalk.content %></p>
+        </div>
+        <div>
+          <% if current_user == typetalk.user then %>
+            <%= link_to "Delete", typetalk, method: :delete, data: { confirm: "You sure?" }, class: 'btn btn-danger btn-xs' %>
+          <% else %>
+            <%= render 'favoriteposts/favorite_button', typetalk: typetalk %>
+          <% end %>
+        </div>
+      </div>
+    </li>
+  <% end %>
+  <%= paginate typetalks %>
+</ul>
