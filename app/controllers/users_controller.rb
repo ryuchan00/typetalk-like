@@ -51,7 +51,6 @@ class UsersController < ApplicationController
         post_data = {
             "name" => post['account']['fullName'],
             "message" => post['message'],
-
             "like" => post['likes'].count,
             "imageUrl" => post['account']['imageUrl'],
             "created_at" => created_time_to_time.to_s
@@ -59,9 +58,8 @@ class UsersController < ApplicationController
         puts post['account']['imageUrl']
         @posts.push(post_data)
       end
-
+      @posts = @posts.sort { |a, b| b['like'] <=> a['like'] }
     }
-    puts Time.now.in_time_zone
   end
 
   def new
