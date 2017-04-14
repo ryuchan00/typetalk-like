@@ -7,7 +7,8 @@ class User < ApplicationRecord
   has_secure_password
 
   has_many :typetalks
-  
+  has_many :topics
+
   # フォロー、フォロワーテーブルの処理
   has_many :relationships
   has_many :followings, through: :relationships, source: :follow

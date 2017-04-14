@@ -19,7 +19,6 @@ class UsersController < ApplicationController
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
     topic_id = '40628'
-    msg = 'Hello!'
 
 # setup a http client
     http = Net::HTTP.new('typetalk.in', 443)
