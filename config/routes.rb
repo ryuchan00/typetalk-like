@@ -25,9 +25,5 @@ Rails.application.routes.draw do
   resources :favoriteposts, only: [:create, :destroy]
 
   #typetalk用
-  get 'topics/show', to: 'topics#show'
-  get 'topics/new', to: 'topics#new'
-  post 'topics/create', to: 'topics#create'
-  delete 'topics/destroy', to: 'topics#destroy'
-
+  resources :topics, only: [:index, :show, :new, :create, :destroy]
 end

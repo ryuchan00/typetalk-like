@@ -1,2 +1,19 @@
-<h1>Topics#new</h1>
-<p>Find me in app/views/topics/new.html.erb</p>
+<div class="text-center">
+  <h1>TOPIC 登録</h1>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+
+    <%= form_for(@topic) do |f| %>
+      <%= render 'layouts/error_messages', model: f.object %>
+
+      <div class="form-group">
+        <%= f.label :topicId, 'いいねの数を計測したいTOPICのURL' %>
+        <%= f.text_field :topicId, class: 'form-control' %>
+      </div>
+      
+      <%= f.submit '登録', class: 'btn btn-primary btn-block' %>
+    <% end %>
+  </div>
+</div>

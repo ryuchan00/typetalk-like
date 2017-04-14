@@ -1,11 +1,10 @@
 class TopicsController < ApplicationController
   def index
-    @users = Topic.all.page(params[:page])
-    Topic.find_by(user_id: session[:user_id]
+    @topics = Topic.find_by(user: session[:user_id])
   end
 
   def show
-    @user = User.find(params[:id])
+    @topic = Topic.find(params[:id])
   end
 
   def new
@@ -13,7 +12,7 @@ class TopicsController < ApplicationController
   end
 
   def create
-    @topic = Topic.new(user_params)
+    @topic = current_user.typetalks.build(topic_params)
     if @topic.save
       flash[:success] = 'トピックを登録しました。'
       redirect_to @topic
@@ -28,11 +27,7 @@ class TopicsController < ApplicationController
 
   private
 
-  def user_params
-    params.require(:user).permit(:name, :password, :password_confirmation)
-  end
-
   def topic_params
-    params.require(:topic).permit(:topicId, :user_id)
+    params.require(:topic).permit(:topicId)
   end
 end
