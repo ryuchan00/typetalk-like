@@ -18,7 +18,7 @@ class UsersController < ApplicationController
 
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
-    topic_id = '40628'
+    topic_id = '17707'
 
 # setup a http client
     http = Net::HTTP.new('typetalk.in', 443)
@@ -33,7 +33,7 @@ class UsersController < ApplicationController
     access_token = json['access_token']
 
 # post a message
-    req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}")
+    req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}?direction=backward&count=200")
     req['Authorization'] = "Bearer #{access_token}"
     return_json = http.request(req)
     @posts = Array.new
@@ -53,7 +53,8 @@ class UsersController < ApplicationController
             "imageUrl" => post['account']['imageUrl'],
             "created_at" => created_time_to_time.to_s
         }
-        puts post['account']['imageUrl']
+        puts post['account']['fullName']
+        puts post_data['like']
         @posts.push(post_data)
       end
       @posts = @posts.sort { |a, b| b['like'] <=> a['like'] }

@@ -1,2 +1,15 @@
-<h1>Topics#show</h1>
-<p>Find me in app/views/topics/show.html.erb</p>
+<div class="row">
+  <div class="col-xs-8">
+    <ul class="media-list">
+          <li class="media">
+            <div class="media-body">
+              <div>
+                <%= @topic.topicId %>
+                <%= @topic.user_id %>
+                <%= @topic.id %>
+              </div>
+            </div>
+          </li>
+    </ul>
+  </div>
+</div>
