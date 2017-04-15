@@ -16,7 +16,7 @@ Rails.application.routes.draw do
     end
     # 今は検索機能は使用しない
     # collection do
-    #   get :search
+    #   get :searc　
     # end
   end
 

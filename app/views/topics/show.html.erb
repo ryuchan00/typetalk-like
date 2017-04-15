@@ -1,15 +1,40 @@
 <div class="row">
   <div class="col-xs-8">
     <ul class="media-list">
-          <li class="media">
-            <div class="media-body">
-              <div>
-                <%= @topic.topicId %>
-                <%= @topic.user_id %>
-                <%= @topic.id %>
-              </div>
-            </div>
-          </li>
+      <li class="media">
+        <div class="media-body">
+          <div>
+            <%= @topic.topicId %>
+            <%= @topic.user_id %>
+            <%= @topic.id %>
+          </div>
+        </div>
+      </li>
     </ul>
+    <div class="col-xs-8">
+      <ul class="media-list">
+        <% @posts.each do |post| %>
+            <% user = post['name'] %>
+            <li class="media">
+              <div class="media-left">
+                <img class="media-object img-rounded" src="<%= post['imageUrl'] %>" alt="" height="50" width="50">
+              </div>
+              <div class="media-body">
+                <div>
+                  <%= user %>
+                  <span class="text-muted">posted at <%= post['created_at'] %></span>
+                </div>
+                <div>
+                  <%= simple_format(post['message']) %>
+                </div>
+                <div>
+                  <p>イイネの数<%= post['like'] %></p>
+                </div>
+              </div>
+            </li>
+        <% end %>
+        <%#= paginate @posts %>
+      </ul>
+    </div>
   </div>
 </div>

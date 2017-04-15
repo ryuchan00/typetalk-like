@@ -27,6 +27,7 @@
                 <%#= simple_format(topic['message']) %>
               </div>
               <div>
+                <p><%= link_to '詳細', topic_path(topic) %></p>
                 <p><%= topic.topicId %></p>
                 <p><%= topic.user.name %></p>
                 <p><%= topic.user_id %></p>
