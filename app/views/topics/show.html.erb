@@ -1,41 +1,36 @@
 <div class="row">
-  <div class="col-xs-12">
-    <ul class="media-list">
-      <li class="media">
-        <div class="media-body">
-          <div>
-            <%= @topic.topicId %>
-            <%= @topic.user_id %>
-            <%= @topic.id %>
-          </div>
-        </div>
-      </li>
-    </ul>
-    <div class="col-xs-12">
-      <ul class="media-list">
-        <% @posts.each do |post| %>
-            <% user = post['name'] %>
-            <li class="media">
-              <div class="media-left">
-                <img class="media-object img-rounded" src="<%= post['imageUrl'] %>" alt="" height="50" width="50">
-              </div>
-              <div class="media-body">
-                <div>
-                  <%= user %>
-                  <span class="text-muted">posted at <%= post['created_at'] %></span>
-                </div>
-                <div>
-                  <%= simple_format(post['message']) %>
-                </div>
-                <div>
-                  <p>イイネの数<%= post['like'] %></p>
-                </div>
-              </div>
-            </li>
-        <% end %>
-        <li role="separator" class="divider"></li>
-        <%#= paginate @posts %>
-      </ul>
+  <aside class="col-md-12 col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><%= @topic_name %></h3>
+      </div>
     </div>
+    <%#= render 'relationships/follow_button', user: @user %>
+  </aside>
+  <div class="col-md-8 col-xs-12">
+    <ul class="media-list">
+      <% @posts.each do |post| %>
+          <% user = post['name'] %>
+          <li class="media">
+            <div class="media-left">
+              <img class="media-object img-rounded" src="<%= post['imageUrl'] %>" alt="" height="50" width="50">
+            </div>
+            <div class="media-body">
+              <div>
+                <p><%= link_to 'typetalkで見る', "https://typetalk.in/topics/#{@topic.topicId}/posts/#{post['post_id']}", :target => ["_blank"] %></p>
+                <%= user %>
+                <span class="text-muted">posted at <%= post['created_at'] %></span>
+              </div>
+              <div>
+                <%= simple_format(post['message']) %>
+              </div>
+              <div>
+                <p class='col-xs-2 bg-danger'>イイネの数　<%= post['like'] %></p>
+              </div>
+            </div>
+          </li>
+      <% end %>
+      <%#= paginate @posts %>
+    </ul>
   </div>
 </div>

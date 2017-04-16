@@ -1,6 +1,43 @@
 class TopicsController < ApplicationController
+  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy]
+
   def index
+    @user = current_user
     @topics = Topic.where(user: session[:user_id])
+
+    require 'net/https'
+    require 'uri'
+    require 'json'
+    require 'time'
+
+    client_id = ENV['CLIENT_ID']
+    client_secret = ENV['CLIENT_SECRET']
+
+# setup a http client
+    http = Net::HTTP.new('typetalk.in', 443)
+    http.use_ssl = true
+
+# get an access token
+    res = http.post(
+        '/oauth2/access_token',
+        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+    )
+    json = JSON.parse(res.body)
+    access_token = json['access_token']
+
+# post a message
+    @name = Array.new
+    @imageUrl = Array.new
+    @topics.each do |topic|
+      p topic.topicId
+      topic_id = topic.topicId.to_s
+      req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}/details")
+      req['Authorization'] = "Bearer #{access_token}"
+      return_json = http.request(req)
+      @name[topic.id] = JSON.parse(return_json.body)['topic']['name']
+      p JSON.parse(return_json.body)['mySpace']['imageUrl']
+      @imageUrl[topic.id] = JSON.parse(return_json.body)['mySpace']['space']['imageUrl']
+    end
   end
 
   def show
@@ -32,6 +69,7 @@ class TopicsController < ApplicationController
     req['Authorization'] = "Bearer #{access_token}"
     return_json = http.request(req)
     @posts = Array.new
+    @topic_name = JSON.parse(return_json.body)['topic']['name'].to_s
     JSON.parse(return_json.body)['posts'].each { |post|
       # puts post['account']['fullName']
       # puts post['message']
@@ -41,6 +79,7 @@ class TopicsController < ApplicationController
         created_time_to_time = Time.parse(created_time).in_time_zone
 
         post_data = {
+            "post_id" => post['id'],
             "name" => post['account']['fullName'],
             "message" => post['message'],
             "like" => post['likes'].count,

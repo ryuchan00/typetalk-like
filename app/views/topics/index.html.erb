@@ -1,41 +1,28 @@
 <div class="row">
-  <aside class="col-xs-4">
+  <aside class="col-md-12 col-md-4">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title"><%#= @user.name %></h3>
-      </div>
-      <div class="panel-body">
-        <img class="media-object img-rounded img-responsive" src="<%#= gravatar_url(@user, {size: 500}) %>" alt="">
+        <h3 class="panel-title"><%= @user.name %></h3>
       </div>
     </div>
     <%#= render 'relationships/follow_button', user: @user %>
   </aside>
-  <div class="col-xs-8">
+  <div class="col-md-8 col-xs-12">
     <ul class="media-list">
       <% @topics.each do |topic| %>
           <%# user = topic['name'] %>
           <li class="media">
             <div class="media-left">
-              <img class="media-object img-rounded" src="<%#= topic['imageUrl'] %>" alt="" height="50" width="50">
+              <img class="media-object img-rounded" src="<%= @imageUrl[topic.id] %>" alt="" height="50" width="50">
             </div>
             <div class="media-body">
               <div>
-                <%#= user %>
-                <span class="text-muted">topiced at <%#= topic['created_at'] %></span>
-              </div>
-              <div>
-                <%#= simple_format(topic['message']) %>
-              </div>
-              <div>
+                <p><%= @name[topic.id] %></p>
                 <p><%= link_to '詳細', topic_path(topic) %></p>
-                <p><%= topic.topicId %></p>
-                <p><%= topic.user.name %></p>
-                <p><%= topic.user_id %></p>
-                <p><%= topic.id %></p>
+                <p><%= link_to 'typetalkで見る', "https://typetalk.in/topics/#{topic.topicId}", :target => ["_blank"] %></p>
               </div>
             </div>
           </li>
-          <li role="separator" class="divider"></li>
       <% end %>
     </ul>
   </div>
