@@ -58,4 +58,4 @@ production:
   pool: 5
   database: typetalks_production
   username: typetalks
-  password: <%= ENV['TYPETALK_LIKE_DATABASE_PASSWORD'] %>
+  password: <%= ENV['TYPETALKS_DATABASE_PASSWORD'] %>
