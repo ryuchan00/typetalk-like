@@ -9,17 +9,21 @@
   </aside>
   <div class="col-md-8 col-xs-12">
     <ul class="media-list">
-      <% @topics.each do |topic| %>
+      <%# @topics.each do |topic| %>
+      <% @name.each do |name| %>
+
           <%# user = topic['name'] %>
           <li class="media">
             <div class="media-left">
-              <img class="media-object img-rounded" src="<%= @imageUrl[topic.id] %>" alt="" height="50" width="50">
+              <!--<img class="media-object img-rounded" src="<%#= @imageUrl[topic.id] %>" alt="" height="50" width="50">-->
             </div>
             <div class="media-body">
               <div>
-                <p><%= @name[topic.id] %></p>
-                <p><%= link_to '詳細', topic_path(topic) %></p>
-                <p><%= link_to 'typetalkで見る', "https://typetalk.in/topics/#{topic.topicId}", :target => ["_blank"] %></p>
+                <!--<p><%#= @name[topic.id] %></p>-->
+                <p><%= name['name'] %></p>
+                <p><%= link_to '詳細', topic_path(:id => name['id']) %></p>
+                <!--<p><%#= link_to 'typetalkで見る', "https://typetalk.in/topics/#{topic.topicId}", :target => ["_blank"] %></p>-->
+                <p><%= link_to 'typetalkで見る', "https://typetalk.in/topics/#{name['id']}", :target => ["_blank"] %></p>
               </div>
             </div>
           </li>

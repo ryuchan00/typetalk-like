@@ -20,24 +20,39 @@ class TopicsController < ApplicationController
 # get an access token
     res = http.post(
         '/oauth2/access_token',
-        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+        # "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=my"
     )
     json = JSON.parse(res.body)
     access_token = json['access_token']
+    req = Net::HTTP::Get.new("/api/v1/topics")
+    req['Authorization'] = "Bearer #{access_token}"
+    return_json = http.request(req)
 
-# post a message
     @name = Array.new
     @imageUrl = Array.new
-    @topics.each do |topic|
-      p topic.topicId
-      topic_id = topic.topicId.to_s
-      req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}/details")
-      req['Authorization'] = "Bearer #{access_token}"
-      return_json = http.request(req)
-      @name[topic.id] = JSON.parse(return_json.body)['topic']['name']
-      p JSON.parse(return_json.body)['mySpace']['imageUrl']
-      @imageUrl[topic.id] = JSON.parse(return_json.body)['mySpace']['space']['imageUrl']
-    end
+# p JSON.parse(return_json.body)['topics']
+    JSON.parse(return_json.body)['topics'].each { |topic|
+      p topic
+      # if key == 'topic' then
+      # @name[topic['topic']['id']] = topic['topic']['name'].to_s
+      @name.push({"id" => topic['topic']['id'].to_s,
+                  "name" => topic['topic']['name'].to_s})
+      # end
+    }
+    p @name
+
+    # @topics.each do |topic|
+    #   p topic.topicId
+    #   topic_id = topic.topicId.to_s
+    #   # req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}/details")
+    #   req = Net::HTTP::Get.new("/api/v1/topics")
+    #   req['Authorization'] = "Bearer #{access_token}"
+    #   return_json = http.request(req)
+    #   @name[topic.id] = JSON.parse(return_json.body)['topic']['name']
+    #   p JSON.parse(return_json.body)['mySpace']['imageUrl']
+    #   @imageUrl[topic.id] = JSON.parse(return_json.body)['mySpace']['space']['imageUrl']
+    # end
   end
 
   def show
@@ -118,4 +133,5 @@ class TopicsController < ApplicationController
   def topic_params
     params.require(:topic).permit(:topicId)
   end
+
 end
