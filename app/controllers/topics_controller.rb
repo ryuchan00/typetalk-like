@@ -56,7 +56,8 @@ class TopicsController < ApplicationController
   end
 
   def show
-    @topic = Topic.find(params[:id])
+    # @topic = Topic.find(params[:id])
+    param_topic_id = params[:id]
 
     require 'net/https'
     require 'uri'
@@ -65,7 +66,8 @@ class TopicsController < ApplicationController
 
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
-    topic_id = @topic.topicId.to_s
+    # topic_id = @topic.topicId.to_s
+    topic_id = param_topic_id
 
 # setup a http client
     http = Net::HTTP.new('typetalk.in', 443)
