@@ -1,5 +1,29 @@
 class TopicsController < ApplicationController
   before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy]
+  # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
+  skip_before_filter :verify_authenticity_token
+
+  def receive
+    # 読み込み時に一度パースが必要
+    json_request = JSON.parse(request.body.read)
+
+    # パース後のデータを表示
+    # p "json_request => #{json_request}"
+    # p "#{json_request.to_hash}"
+
+    # 各要素へのアクセス方法
+    # p "glossary => #{json_request["glossary"]}"
+    # p "glossary.title => #{json_request["glossary"]["title"]}"
+
+    # この後、postされたデータをDBに突っ込むなり、必要な処理を記述してください。
+    if !json_request.blank?
+      personal = json_request
+    else
+      personal = {'status' => 500}
+    end
+
+    render :json => personal
+  end
 
   def index
     @user = current_user
@@ -69,11 +93,11 @@ class TopicsController < ApplicationController
     # topic_id = @topic.topicId.to_s
     topic_id = param_topic_id
 
-# setup a http client
+    # setup a http client
     http = Net::HTTP.new('typetalk.in', 443)
     http.use_ssl = true
 
-# get an access token
+    # get an access token
     res = http.post(
         '/oauth2/access_token',
         "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
@@ -81,7 +105,7 @@ class TopicsController < ApplicationController
     json = JSON.parse(res.body)
     access_token = json['access_token']
 
-# post a message
+    # post a message
     req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}?direction=backward&count=200")
     req['Authorization'] = "Bearer #{access_token}"
     return_json = http.request(req)
