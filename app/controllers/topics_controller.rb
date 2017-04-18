@@ -97,6 +97,7 @@ class TopicsController < ApplicationController
 
         post_data = {
             "post_id" => post['id'],
+            "topic_id" => post['topicId'],
             "name" => post['account']['fullName'],
             "message" => post['message'],
             "like" => post['likes'].count,
