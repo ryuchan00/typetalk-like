@@ -8,6 +8,7 @@ Rails.application.routes.draw do
 
   get 'signup', to: 'users#new'
 
+  get 'receive', to: 'topics#receive'
   post 'receive', to: 'topics#receive'
 
   resources :users, only: [:index, :show, :new, :create] do
