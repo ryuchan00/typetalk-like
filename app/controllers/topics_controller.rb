@@ -17,12 +17,18 @@ class TopicsController < ApplicationController
 
     # この後、postされたデータをDBに突っ込むなり、必要な処理を記述してください。
     if !json_request.blank?
-      personal = json_request
+      post = json_request
+      @topic.topicId = post["topic"]["id"]
+      if @topic.save
+        p 'トピックを登録しました。'
+        redirect_to @topic
+      else
+        p 'トピックの登録に失敗しました。'
     else
-      personal = {'status' => 500}
+      post = {'status' => 500}
     end
 
-    render :json => personal
+    render :json => post
   end
 
   def index
@@ -64,7 +70,6 @@ class TopicsController < ApplicationController
                   "name" => topic['topic']['name'].to_s})
       # end
     }
-    p @name
 
     # @topics.each do |topic|
     #   p topic.topicId
