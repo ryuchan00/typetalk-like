@@ -34,11 +34,9 @@ ActiveRecord::Schema.define(version: 20170413152000) do
 
   create_table "topics", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.string   "topicId"
-    t.integer  "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id", "topicId"], name: "index_topics_on_user_id_and_topicId", unique: true, using: :btree
-    t.index ["user_id"], name: "index_topics_on_user_id", using: :btree
+    t.index ["topicId"], name: "index_topics_on_topicId", unique: true, using: :btree
   end
 
   create_table "typetalks", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
@@ -60,6 +58,5 @@ ActiveRecord::Schema.define(version: 20170413152000) do
   add_foreign_key "favoriteposts", "users"
   add_foreign_key "relationships", "users"
   add_foreign_key "relationships", "users", column: "follow_id"
-  add_foreign_key "topics", "users"
   add_foreign_key "typetalks", "users"
 end
