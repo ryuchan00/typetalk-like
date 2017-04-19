@@ -24,6 +24,7 @@ class TopicsController < ApplicationController
         redirect_to @topic
       else
         p 'トピックの登録に失敗しました。'
+      end
     else
       post = {'status' => 500}
     end
