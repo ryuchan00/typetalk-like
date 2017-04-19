@@ -20,6 +20,7 @@ class TopicsController < ApplicationController
       post = json_request
       @topic = Topic.new
       @topic.topicId = post["topic"]["id"]
+      p post["topic"]["id"]
       if @topic.save
         p 'トピックを登録しました。'
       else
