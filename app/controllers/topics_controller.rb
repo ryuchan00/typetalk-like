@@ -18,10 +18,10 @@ class TopicsController < ApplicationController
     # この後、postされたデータをDBに突っ込むなり、必要な処理を記述してください。
     if !json_request.blank?
       post = json_request
+      @topic = Topic.new
       @topic.topicId = post["topic"]["id"]
       if @topic.save
         p 'トピックを登録しました。'
-        redirect_to @topic
       else
         p 'トピックの登録に失敗しました。'
       end
