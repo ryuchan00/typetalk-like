@@ -24,9 +24,10 @@ ActiveRecord::Schema.define(version: 20170420002308) do
 
   create_table "posts", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.string   "post_id"
+    t.string   "post_user_name"
     t.integer  "topic_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
     t.index ["post_id"], name: "index_posts_on_post_id", unique: true, using: :btree
     t.index ["topic_id"], name: "index_posts_on_topic_id", using: :btree
   end
