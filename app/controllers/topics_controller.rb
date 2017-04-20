@@ -1,5 +1,37 @@
 class TopicsController < ApplicationController
   before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy]
+  # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
+  skip_before_filter :verify_authenticity_token
+
+  def receive
+    # 読み込み時に一度パースが必要
+    json_request = JSON.parse(request.body.read)
+
+    # パース後のデータを表示
+    # p "json_request => #{json_request}"
+    # p "#{json_request.to_hash}"
+
+    # 各要素へのアクセス方法
+    # p "glossary => #{json_request["glossary"]}"
+    # p "glossary.title => #{json_request["glossary"]["title"]}"
+
+    # この後、postされたデータをDBに突っ込むなり、必要な処理を記述してください。
+    if !json_request.blank?
+      post = json_request
+      @topic = Topic.new
+      @topic.topicId = post["topic"]["id"].to_s
+      p post["topic"]["id"]
+      if @topic.save
+        p 'トピックを登録しました。'
+      else
+        p 'トピックの登録に失敗しました。'
+      end
+    else
+      post = {'status' => 500}
+    end
+
+    render :json => post
+  end
 
   def index
     @user = current_user
@@ -20,28 +52,43 @@ class TopicsController < ApplicationController
 # get an access token
     res = http.post(
         '/oauth2/access_token',
-        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+        # "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=my"
     )
     json = JSON.parse(res.body)
     access_token = json['access_token']
+    req = Net::HTTP::Get.new("/api/v1/topics")
+    req['Authorization'] = "Bearer #{access_token}"
+    return_json = http.request(req)
 
-# post a message
     @name = Array.new
     @imageUrl = Array.new
-    @topics.each do |topic|
-      p topic.topicId
-      topic_id = topic.topicId.to_s
-      req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}/details")
-      req['Authorization'] = "Bearer #{access_token}"
-      return_json = http.request(req)
-      @name[topic.id] = JSON.parse(return_json.body)['topic']['name']
-      p JSON.parse(return_json.body)['mySpace']['imageUrl']
-      @imageUrl[topic.id] = JSON.parse(return_json.body)['mySpace']['space']['imageUrl']
-    end
+# p JSON.parse(return_json.body)['topics']
+    JSON.parse(return_json.body)['topics'].each { |topic|
+      p topic
+      # if key == 'topic' then
+      # @name[topic['topic']['id']] = topic['topic']['name'].to_s
+      @name.push({"id" => topic['topic']['id'].to_s,
+                  "name" => topic['topic']['name'].to_s})
+      # end
+    }
+
+    # @topics.each do |topic|
+    #   p topic.topicId
+    #   topic_id = topic.topicId.to_s
+    #   # req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}/details")
+    #   req = Net::HTTP::Get.new("/api/v1/topics")
+    #   req['Authorization'] = "Bearer #{access_token}"
+    #   return_json = http.request(req)
+    #   @name[topic.id] = JSON.parse(return_json.body)['topic']['name']
+    #   p JSON.parse(return_json.body)['mySpace']['imageUrl']
+    #   @imageUrl[topic.id] = JSON.parse(return_json.body)['mySpace']['space']['imageUrl']
+    # end
   end
 
   def show
-    @topic = Topic.find(params[:id])
+    # @topic = Topic.find(params[:id])
+    param_topic_id = params[:id]
 
     require 'net/https'
     require 'uri'
@@ -50,13 +97,14 @@ class TopicsController < ApplicationController
 
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
-    topic_id = @topic.topicId.to_s
+    # topic_id = @topic.topicId.to_s
+    topic_id = param_topic_id
 
-# setup a http client
+    # setup a http client
     http = Net::HTTP.new('typetalk.in', 443)
     http.use_ssl = true
 
-# get an access token
+    # get an access token
     res = http.post(
         '/oauth2/access_token',
         "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
@@ -64,7 +112,7 @@ class TopicsController < ApplicationController
     json = JSON.parse(res.body)
     access_token = json['access_token']
 
-# post a message
+    # post a message
     req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}?direction=backward&count=200")
     req['Authorization'] = "Bearer #{access_token}"
     return_json = http.request(req)
@@ -80,6 +128,7 @@ class TopicsController < ApplicationController
 
         post_data = {
             "post_id" => post['id'],
+            "topic_id" => post['topicId'],
             "name" => post['account']['fullName'],
             "message" => post['message'],
             "like" => post['likes'].count,
@@ -118,4 +167,5 @@ class TopicsController < ApplicationController
   def topic_params
     params.require(:topic).permit(:topicId)
   end
+
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170413152000) do
+ActiveRecord::Schema.define(version: 20170420002308) do
 
   create_table "favoriteposts", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.integer  "user_id"
@@ -20,6 +20,15 @@ ActiveRecord::Schema.define(version: 20170413152000) do
     t.index ["typetalk_id"], name: "index_favoriteposts_on_typetalk_id", using: :btree
     t.index ["user_id", "typetalk_id"], name: "index_favoriteposts_on_user_id_and_typetalk_id", unique: true, using: :btree
     t.index ["user_id"], name: "index_favoriteposts_on_user_id", using: :btree
+  end
+
+  create_table "posts", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
+    t.string   "post_id"
+    t.integer  "topic_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_posts_on_post_id", unique: true, using: :btree
+    t.index ["topic_id"], name: "index_posts_on_topic_id", using: :btree
   end
 
   create_table "relationships", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
@@ -34,11 +43,9 @@ ActiveRecord::Schema.define(version: 20170413152000) do
 
   create_table "topics", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
     t.string   "topicId"
-    t.integer  "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id", "topicId"], name: "index_topics_on_user_id_and_topicId", unique: true, using: :btree
-    t.index ["user_id"], name: "index_topics_on_user_id", using: :btree
+    t.index ["topicId"], name: "index_topics_on_topicId", unique: true, using: :btree
   end
 
   create_table "typetalks", force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8" do |t|
@@ -58,8 +65,8 @@ ActiveRecord::Schema.define(version: 20170413152000) do
 
   add_foreign_key "favoriteposts", "typetalks"
   add_foreign_key "favoriteposts", "users"
+  add_foreign_key "posts", "topics"
   add_foreign_key "relationships", "users"
   add_foreign_key "relationships", "users", column: "follow_id"
-  add_foreign_key "topics", "users"
   add_foreign_key "typetalks", "users"
 end
