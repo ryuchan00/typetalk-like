@@ -5,3 +5,9 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+User.create(name: 'super', password_digest: '$2a$10$4QkHdD3a.jX5f4F46pUVFu8XkWIsFVyzFaQfZNb.gAE357x5szLtq') # cbase3554
+User.create(name: 'super2', password_digest: '$2a$10$4QkHdD3a.jX5f4F46pUVFu8XkWIsFVyzFaQfZNb.gAE357x5szLtq') # cbase3554
+
+Topic.create(topicId: '17707')
+Topic.create(topicId: '40628')
+Topic.create(topicId: '41429')
