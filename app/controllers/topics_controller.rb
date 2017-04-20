@@ -21,9 +21,10 @@ class TopicsController < ApplicationController
       @topic = Topic.new
       @post = Post.new
       @topic.topicId = post["topic"]["id"].to_s
-      @post.topic = @topic.topicId
-      @post.post_id = post["post"]["id"]
-      @post.post_user_id = post["post"]["account"]["name"]
+      @post.topic = @topic
+      @post.post_id = post["post"]["id"].to_s
+      p post["post"]["account"]["name"].to_s
+      @post.post_user_id = post["post"]["account"]["name"].to_s
       p post["topic"]["id"]
       if @topic.save
         p 'トピックを登録しました。'
