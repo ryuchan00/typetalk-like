@@ -19,12 +19,21 @@ class TopicsController < ApplicationController
     if !json_request.blank?
       post = json_request
       @topic = Topic.new
+      @post = Post.new
       @topic.topicId = post["topic"]["id"].to_s
+      @post.topic = @topic.topicId
+      @post.post_id = post["post"]["id"]
+      @post.post_user_id = post["post"]["account"]["name"]
       p post["topic"]["id"]
       if @topic.save
         p 'トピックを登録しました。'
       else
         p 'トピックの登録に失敗しました。'
+      end
+      if @post.save
+        p '投稿を登録しました。'
+      else
+        p '投稿の登録に失敗しました。'
       end
     else
       post = {'status' => 500}
@@ -72,18 +81,6 @@ class TopicsController < ApplicationController
                   "name" => topic['topic']['name'].to_s})
       # end
     }
-
-    # @topics.each do |topic|
-    #   p topic.topicId
-    #   topic_id = topic.topicId.to_s
-    #   # req = Net::HTTP::Get.new("/api/v1/topics/#{topic_id}/details")
-    #   req = Net::HTTP::Get.new("/api/v1/topics")
-    #   req['Authorization'] = "Bearer #{access_token}"
-    #   return_json = http.request(req)
-    #   @name[topic.id] = JSON.parse(return_json.body)['topic']['name']
-    #   p JSON.parse(return_json.body)['mySpace']['imageUrl']
-    #   @imageUrl[topic.id] = JSON.parse(return_json.body)['mySpace']['space']['imageUrl']
-    # end
   end
 
   def show
