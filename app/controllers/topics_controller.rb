@@ -18,19 +18,28 @@ class TopicsController < ApplicationController
     # この後、postされたデータをDBに突っ込むなり、必要な処理を記述してください。
     if !json_request.blank?
       post = json_request
-      @topic = Topic.new
+      # @topic = Topic.new
       @post = Post.new
-      @topic.topicId = post["topic"]["id"].to_s
-      @post.topic = @topic.id
-      @post.post_id = post["post"]["id"].to_s
-      p post["post"]["account"]["name"].to_s
-      @post.post_user_name = post["post"]["account"]["name"].to_s
-      p post["topic"]["id"]
-      if @topic.save
-        p 'トピックを登録しました。'
-      else
-        p 'トピックの登録に失敗しました。'
+      # @topic.topicId = post["topic"]["id"].to_s
+      # @post.topic = @topic
+      # @post.post_id = post["post"]["id"].to_s
+      # p post["post"]["account"]["name"].to_s
+      # @post.post_user_name = post["post"]["account"]["name"].to_s
+      # p post["topic"]["id"]
+      # topic = Topic.find_or_create_by(topicId: post["topic"]["id"].to_s)
+      topic = Topic.find_or_initialize_by(topicId: post["topic"]["id"].to_s)
+      if topic.new_record? # 新規作成の場合は保存
+        # 新規作成時に行いたい処理を記述
+        if topic.save
+          p 'トピックを登録しました。'
+        else
+          p 'トピックの登録に失敗しました。'
+        end
       end
+      p topic
+      @post.topic = topic
+      @post.post_id = post["post"]["id"].to_s
+      @post.post_user_name = post["post"]["account"]["name"].to_s
       if @post.save
         p '投稿を登録しました。'
       else
@@ -45,7 +54,8 @@ class TopicsController < ApplicationController
 
   def index
     @user = current_user
-    @topics = Topic.where(user: session[:user_id])
+    # @topics = Topic.where(user: session[:user_id])
+    @topics = Topic.all
 
     require 'net/https'
     require 'uri'
@@ -74,14 +84,18 @@ class TopicsController < ApplicationController
     @name = Array.new
     @imageUrl = Array.new
 # p JSON.parse(return_json.body)['topics']
-    JSON.parse(return_json.body)['topics'].each { |topic|
-      p topic
+#     JSON.parse(return_json.body)['topics'].each do |topic|
+    @topics.each do |topic|
+      req = Net::HTTP::Get.new("/api/v1/topics")
+      req['Authorization'] = "Bearer #{access_token}"
+      return_json = http.request(req)
+      JSON.parse(return_json.body)[]
       # if key == 'topic' then
       # @name[topic['topic']['id']] = topic['topic']['name'].to_s
       @name.push({"id" => topic['topic']['id'].to_s,
                   "name" => topic['topic']['name'].to_s})
       # end
-    }
+    end
   end
 
   def show
