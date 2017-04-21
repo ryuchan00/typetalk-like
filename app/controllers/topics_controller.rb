@@ -103,7 +103,7 @@ class TopicsController < ApplicationController
   def show
     # @topic = Topic.find(params[:id])
     param_topic_id = params[:id]
-    if Topic.where(topicId: param_topic_id).nonzero?
+    if Topic.where(topicId: param_topic_id).exists?
       topic = Topic.find_by(topicId: param_topic_id)
       @posts = Post.where(topic: topic)
     end
@@ -131,28 +131,38 @@ class TopicsController < ApplicationController
     # post a message
     @post_data = Array.new
     @posts.each { |post|
-      req = Net::HTTP::Get.new("/api/v1/topics/#{topic.id}/posts/#{post.post_id}")
+      http = Net::HTTP.new('typetalk.in', 443)
+      http.use_ssl = true
+
+      req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+      p "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}"
       req['Authorization'] = "Bearer #{access_token}"
       return_json = http.request(req)
+      p return_json
+      p access_token
+      p topic.id
+      p topic.topicId
+      p post.post_id.to_i
+      p return_json
+      post_json = JSON.parse(return_json.body)
+      p post_json['post']['likes'].count
       if @post_data.empty?
-        @topic_name = JSON.parse(return_json.body)['topic']['name']
+        @topic_name = post_json['topic']['name']
       end
 
-      if post['likes'].count != 0 then
-        created_time = post['createdAt']
+      if post_json['post']['likes'].count != 0 then
+        created_time = post_json['post']['createdAt']
         created_time_to_time = Time.parse(created_time).in_time_zone
 
         post_data = {
-            "post_id" => post['id'],
-            "topic_id" => post['topicId'],
-            "name" => post['account']['fullName'],
-            "message" => post['message'],
-            "like" => post['likes'].count,
-            "imageUrl" => post['account']['imageUrl'],
+            "post_id" => post_json['post']['id'],
+            "topic_id" => post_json['post']['topicId'],
+            "name" => post_json['post']['account']['fullName'],
+            "message" => post_json['post']['message'],
+            "like" => post_json['post']['likes'].count,
+            "imageUrl" => post_json['post']['account']['imageUrl'],
             "created_at" => created_time_to_time.to_s
         }
-        # puts post['account']['fullName']
-        # puts post_data['like']
         @post_data.push(post_data)
       end
       @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
