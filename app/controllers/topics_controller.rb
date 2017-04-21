@@ -72,28 +72,30 @@ class TopicsController < ApplicationController
 # get an access token
     res = http.post(
         '/oauth2/access_token',
-        # "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
-        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=my"
+        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
     )
     json = JSON.parse(res.body)
     access_token = json['access_token']
-    req = Net::HTTP::Get.new("/api/v1/topics")
-    req['Authorization'] = "Bearer #{access_token}"
-    return_json = http.request(req)
+    # req = Net::HTTP::Get.new("/api/v1/topics")
+    # req['Authorization'] = "Bearer #{access_token}"
+    # return_json = http.request(req)
 
     @name = Array.new
     @imageUrl = Array.new
 # p JSON.parse(return_json.body)['topics']
 #     JSON.parse(return_json.body)['topics'].each do |topic|
     @topics.each do |topic|
-      req = Net::HTTP::Get.new("/api/v1/topics")
+      p topic.topicId
+      p topic["topicId"]
+      req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}/details")
       req['Authorization'] = "Bearer #{access_token}"
       return_json = http.request(req)
-      JSON.parse(return_json.body)[]
+      p return_json
+      topic_info = JSON.parse(return_json.body)
       # if key == 'topic' then
       # @name[topic['topic']['id']] = topic['topic']['name'].to_s
-      @name.push({"id" => topic['topic']['id'].to_s,
-                  "name" => topic['topic']['name'].to_s})
+      @name.push({"id" => topic_info['topic']['id'].to_s,
+                  "name" => topic_info['topic']['name'].to_s})
       # end
     end
   end
