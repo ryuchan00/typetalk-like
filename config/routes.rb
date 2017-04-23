@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   post 'receive', to: 'topics#receive'
 
   get 'topic_all', to: 'topics#all'
+  get 'topic_user', to: 'topics#user'
 
   resources :users, only: [:index, :show, :new, :create] do
     # member do

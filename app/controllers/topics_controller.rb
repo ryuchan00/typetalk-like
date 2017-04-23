@@ -188,6 +188,69 @@ class TopicsController < ApplicationController
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
+  def user
+    topics = Topic.all
+    access_token = get_access_token
+    @topic_name = 'ユーザーごとの集計'
+    @post_data = Array.new
+
+    require 'ostruct'
+    like_count = OpenStruct.new
+    like_count.yamada = 'test'
+
+    topics.each do |topic|
+      require 'net/https'
+      require 'uri'
+      require 'json'
+      require 'time'
+
+      posts = Post.where(topic: topic)
+
+      posts.each do |post|
+        http = Net::HTTP.new('typetalk.in', 443)
+        http.use_ssl = true
+
+        req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+        req['Authorization'] = "Bearer #{access_token}"
+        return_json = http.request(req)
+        post_json = JSON.parse(return_json.body)
+        if post_json['post']['likes'].count != 0 then
+          p like_count
+          p post_json['post']['likes'].count
+          p post_json['post']['account']['name']
+          if like_count[post_json['post']['account']['name'].to_sym] == nil then
+            like_count[post_json['post']['account']['name'].to_sym] = 0
+            p like_count
+          else
+            # if like_count.has_key?[post_json['post']['account']['name']] then
+            #   like_count[post_json['post']['account']['name']] = post_json['post']['likes'].count
+            # else
+            like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
+            # end
+          end
+          key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
+
+          if key.nil? then
+            p key
+            post_data = {
+                "name" => post_json['post']['account']['fullName'],
+                "like" => like_count[post_json['post']['account']['fullName'].to_sym],
+                "imageUrl" => post_json['post']['account']['imageUrl']
+            }
+            @post_data.push(post_data)
+          else
+            @post_data[key] = {
+                "name" => post_json['post']['account']['fullName'],
+                "like" => like_count[post_json['post']['account']['fullName']],
+                "imageUrl" => post_json['post']['account']['imageUrl']
+            }
+          end
+        end
+      end
+    end
+    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
+  end
+
   def new
     @topic = Topic.new
   end

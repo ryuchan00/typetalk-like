@@ -1,0 +1,31 @@
+<div class="row">
+  <aside class="col-md-12 col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><%= @topic_name %></h3>
+      </div>
+    </div>
+    <%#= render 'relationships/follow_button', user: @user %>
+  </aside>
+  <div class="col-md-8 col-xs-12">
+    <ul class="media-list">
+      <% @post_data.each do |post| %>
+          <% user = post["name"] %>
+          <li class="media">
+            <div class="media-left">
+              <img class="media-object img-rounded" src="<%= post['imageUrl'] %>" alt="" height="50" width="50">
+            </div>
+            <div class="media-body">
+              <div>
+                <%= user %>
+              </div>
+              <div>
+                <p class='col-xs-2 bg-danger'>イイネの数　<%= post['like'] %></p>
+              </div>
+            </div>
+          </li>
+      <% end %>
+      <%#= paginate @posts %>
+    </ul>
+  </div>
+</div>
