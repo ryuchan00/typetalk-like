@@ -30,5 +30,5 @@ Rails.application.routes.draw do
   # resources :favoriteposts, only: [:create, :destroy]
 
   #typetalk用
-  resources :topics, only: [:index, :show, :new, :create, :destroy]
+  resources :topics, only: [:index, :show, :new, :create, , :all, :destroy]
 end
