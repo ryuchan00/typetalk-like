@@ -18,15 +18,7 @@ class TopicsController < ApplicationController
     # この後、postされたデータをDBに突っ込むなり、必要な処理を記述してください。
     if !json_request.blank?
       post = json_request
-      # @topic = Topic.new
       @post = Post.new
-      # @topic.topicId = post["topic"]["id"].to_s
-      # @post.topic = @topic
-      # @post.post_id = post["post"]["id"].to_s
-      # p post["post"]["account"]["name"].to_s
-      # @post.post_user_name = post["post"]["account"]["name"].to_s
-      # p post["topic"]["id"]
-      # topic = Topic.find_or_create_by(topicId: post["topic"]["id"].to_s)
       topic = Topic.find_or_initialize_by(topicId: post["topic"]["id"].to_s)
       if topic.new_record? # 新規作成の場合は保存
         # 新規作成時に行いたい処理を記述
