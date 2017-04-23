@@ -11,6 +11,8 @@ Rails.application.routes.draw do
   get 'receive', to: 'topics#receive'
   post 'receive', to: 'topics#receive'
 
+  get 'topic_all', to: 'topics#all'
+
   resources :users, only: [:index, :show, :new, :create] do
     # member do
     #   get :followings
@@ -30,5 +32,5 @@ Rails.application.routes.draw do
   # resources :favoriteposts, only: [:create, :destroy]
 
   #typetalk用
-  resources :topics, only: [:index, :show, :new, :create, :all, :destroy]
+  resources :topics, only: [:index, :show, :new, :create, :destroy]
 end
