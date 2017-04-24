@@ -195,8 +195,8 @@ class TopicsController < ApplicationController
     @post_data = Array.new
 
     require 'ostruct'
-    like_count = OpenStruct.new
-    like_count.yamada = 'test'
+    # like_count = OpenStruct.new
+    like_count = {}
 
     topics.each do |topic|
       require 'net/https'
@@ -222,32 +222,30 @@ class TopicsController < ApplicationController
             like_count[post_json['post']['account']['name'].to_sym] = 0
             p like_count
           else
-            # if like_count.has_key?[post_json['post']['account']['name']] then
-            #   like_count[post_json['post']['account']['name']] = post_json['post']['likes'].count
-            # else
             like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
             # end
           end
           key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
 
           if key.nil? then
-            p key
             post_data = {
                 "name" => post_json['post']['account']['fullName'],
-                "like" => like_count[post_json['post']['account']['fullName'].to_sym],
+                "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
                 "imageUrl" => post_json['post']['account']['imageUrl']
             }
             @post_data.push(post_data)
           else
             @post_data[key] = {
                 "name" => post_json['post']['account']['fullName'],
-                "like" => like_count[post_json['post']['account']['fullName']],
+                "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
                 "imageUrl" => post_json['post']['account']['imageUrl']
             }
           end
+          p like_count
         end
       end
     end
+    p @post_data
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
