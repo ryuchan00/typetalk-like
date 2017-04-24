@@ -1,5 +1,5 @@
 class TopicsController < ApplicationController
-  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy]
+  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :user]
   # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
   skip_before_filter :verify_authenticity_token
 
