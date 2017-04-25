@@ -125,6 +125,9 @@ class TopicsController < ApplicationController
 
       if result.empty? then
         p "#{post.post_id.to_i} is empty"
+        post_id = post.post_id.to_i
+        destropy_post = Post.where(post_id: post_id)
+        Post.destroy(destropy_post)
       else
         post_json = JSON.parse(return_json.body)
         if @post_data.empty?
