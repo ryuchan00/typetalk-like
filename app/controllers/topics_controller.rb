@@ -28,7 +28,6 @@ class TopicsController < ApplicationController
           p 'トピックの登録に失敗しました。'
         end
       end
-      p topic
       @post.topic = topic
       @post.post_id = post["post"]["id"].to_s
       @post.post_user_name = post["post"]["account"]["name"].to_s
@@ -65,24 +64,25 @@ class TopicsController < ApplicationController
         '/oauth2/access_token',
         "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
     )
-    json = JSON.parse(res.body)
-    access_token = json['access_token']
 
     @name = Array.new
     @imageUrl = Array.new
-    @topics.each do |topic|
-      p topic.topicId
-      p topic["topicId"]
-      req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}/details")
-      req['Authorization'] = "Bearer #{access_token}"
-      return_json = http.request(req)
-      p return_json
-      topic_info = JSON.parse(return_json.body)
-      # if key == 'topic' then
-      # @name[topic['topic']['id']] = topic['topic']['name'].to_s
-      @name.push({"id" => topic_info['topic']['id'].to_s,
-                  "name" => topic_info['topic']['name'].to_s})
-      # end
+
+    if res.code == '200'
+      json = JSON.parse(res.body)
+      access_token = json['access_token']
+
+      @topics.each do |topic|
+        req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}/details")
+        req['Authorization'] = "Bearer #{access_token}"
+        return_json = http.request(req)
+
+        if return_json.code == '200'
+          topic_info = JSON.parse(return_json.body)
+          @name.push({"id" => topic_info['topic']['id'].to_s,
+                      "name" => topic_info['topic']['name'].to_s})
+        end
+      end
     end
   end
 
@@ -261,7 +261,6 @@ class TopicsController < ApplicationController
         end
       end
     end
-    p @post_data
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
