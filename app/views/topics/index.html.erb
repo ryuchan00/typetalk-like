@@ -17,12 +17,18 @@
         <div class="media-body">
           <p><%= link_to 'すべてのトピックの集計', topic_all_path %></p>
         </div>
+      </li>
+      <li class="media">
         <div class="media-body">
+          <%= form_tag({:controller => 'topic', :action => 'user'}, :remote => true, :class => 'form-ajax') do -%>
+          <%= hidden_field_tag :ajax_handler, 'handle_name1' -%>
+          <%= submit_tag('Start Ajax', :class => 'btn btn-primary btn-sm') -%>
+          <% end %>
           <p><%= link_to 'ユーザーごとの集計', topic_user_path %></p>
         </div>
       </li>
+      
       <% @name.each do |name| %>
-
           <%# user = topic['name'] %>
           <li class="media">
             <div class="media-left">
