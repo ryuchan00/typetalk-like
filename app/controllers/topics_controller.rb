@@ -168,163 +168,160 @@ class TopicsController < ApplicationController
     end
   end
 
-end
+  def all
+    topics = Topic.all
+    access_token = get_access_token
+    @topic_name = 'すべてのトピックの集計'
+    @post_data = Array.new
 
-def all
-  topics = Topic.all
-  access_token = get_access_token
-  @topic_name = 'すべてのトピックの集計'
-  @post_data = Array.new
+    topics.each do |topic|
+      require 'net/https'
+      require 'uri'
+      require 'json'
+      require 'time'
 
-  topics.each do |topic|
-    require 'net/https'
-    require 'uri'
-    require 'json'
-    require 'time'
+      posts = Post.where(topic: topic)
+      http = Net::HTTP.new('typetalk.in', 443)
+      http.use_ssl = true
 
-    posts = Post.where(topic: topic)
-    http = Net::HTTP.new('typetalk.in', 443)
-    http.use_ssl = true
+      posts.each do |post|
+        req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+        req['Authorization'] = "Bearer #{access_token}"
+        return_json = http.request(req)
+        if return_json.code == '200'
+          post_json = JSON.parse(return_json.body)
+          if post_json['post']['likes'].count != 0 then
+            created_time = post_json['post']['createdAt']
+            created_time_to_time = Time.parse(created_time).in_time_zone
 
-    posts.each do |post|
-      req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-      req['Authorization'] = "Bearer #{access_token}"
-      return_json = http.request(req)
-      if return_json.code == '200'
-        post_json = JSON.parse(return_json.body)
-        if post_json['post']['likes'].count != 0 then
-          created_time = post_json['post']['createdAt']
-          created_time_to_time = Time.parse(created_time).in_time_zone
-
-          post_data = {
-              "post_id" => post_json['post']['id'],
-              "topic_id" => post_json['post']['topicId'],
-              "name" => post_json['post']['account']['fullName'],
-              "message" => post_json['post']['message'],
-              "like" => post_json['post']['likes'].count,
-              "imageUrl" => post_json['post']['account']['imageUrl'],
-              "created_at" => created_time_to_time.to_s
-          }
-          @post_data.push(post_data)
-        end
-      else
-        p "#{post.post_id.to_i} is empty"
-        # post_id = post.post_id.to_i
-        # destropy_post = Post.where(post_id: post_id)
-        # Post.destroy(destropy_post)
-      end
-    end
-  end
-  @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
-end
-
-def user
-  topics = Topic.all
-  access_token = get_access_token
-  @topic_name = 'ユーザーごとの集計'
-  @post_data = Array.new
-
-  require 'ostruct'
-  # like_count = OpenStruct.new
-  like_count = {}
-
-  topics.each do |topic|
-    require 'net/https'
-    require 'uri'
-    require 'json'
-    require 'time'
-
-    posts = Post.where(topic: topic)
-    http = Net::HTTP.new('typetalk.in', 443)
-    http.use_ssl = true
-
-    posts.each do |post|
-      req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-      req['Authorization'] = "Bearer #{access_token}"
-      return_json = http.request(req)
-
-      if return_json.code == '200'
-        post_json = JSON.parse(return_json.body)
-        if post_json['post']['likes'].count != 0 then
-          if like_count[post_json['post']['account']['name'].to_sym] == nil then
-            like_count[post_json['post']['account']['name'].to_sym] = 0
-            p like_count
-          else
-            like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
-            # end
-          end
-          key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
-
-          if key.nil? then
             post_data = {
+                "post_id" => post_json['post']['id'],
+                "topic_id" => post_json['post']['topicId'],
                 "name" => post_json['post']['account']['fullName'],
-                "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-                "imageUrl" => post_json['post']['account']['imageUrl']
+                "message" => post_json['post']['message'],
+                "like" => post_json['post']['likes'].count,
+                "imageUrl" => post_json['post']['account']['imageUrl'],
+                "created_at" => created_time_to_time.to_s
             }
             @post_data.push(post_data)
-          else
-            @post_data[key] = {
-                "name" => post_json['post']['account']['fullName'],
-                "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-                "imageUrl" => post_json['post']['account']['imageUrl']
-            }
           end
+        else
+          p "#{post.post_id.to_i} is empty"
+          # post_id = post.post_id.to_i
+          # destropy_post = Post.where(post_id: post_id)
+          # Post.destroy(destropy_post)
         end
-      else
-        p "#{post.post_id.to_i} is empty"
-        # post_id = post.post_id.to_i
-        # destropy_post = Post.where(post_id: post_id)
-        # Post.destroy(destropy_post)
       end
     end
+    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
-  @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
-end
 
-def new
-  @topic = Topic.new
-end
+  def user
+    topics = Topic.all
+    access_token = get_access_token
+    @topic_name = 'ユーザーごとの集計'
+    @post_data = Array.new
 
-def create
-  @topic = current_user.topics.build(topic_params)
-  @topic.topicId = @topic.topicId.split('/').last
-  if @topic.save
-    flash[:success] = 'トピックを登録しました。'
-    redirect_to @topic
-  else
-    flash.now[:danger] = 'トピックの登録に失敗しました。'
-    render :new
+    require 'ostruct'
+    # like_count = OpenStruct.new
+    like_count = {}
+
+    topics.each do |topic|
+      require 'net/https'
+      require 'uri'
+      require 'json'
+      require 'time'
+
+      posts = Post.where(topic: topic)
+      http = Net::HTTP.new('typetalk.in', 443)
+      http.use_ssl = true
+
+      posts.each do |post|
+        req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+        req['Authorization'] = "Bearer #{access_token}"
+        return_json = http.request(req)
+
+        if return_json.code == '200'
+          post_json = JSON.parse(return_json.body)
+          if post_json['post']['likes'].count != 0 then
+            if like_count[post_json['post']['account']['name'].to_sym] == nil then
+              like_count[post_json['post']['account']['name'].to_sym] = 0
+              p like_count
+            else
+              like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
+              # end
+            end
+            key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
+
+            if key.nil? then
+              post_data = {
+                  "name" => post_json['post']['account']['fullName'],
+                  "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
+                  "imageUrl" => post_json['post']['account']['imageUrl']
+              }
+              @post_data.push(post_data)
+            else
+              @post_data[key] = {
+                  "name" => post_json['post']['account']['fullName'],
+                  "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
+                  "imageUrl" => post_json['post']['account']['imageUrl']
+              }
+            end
+          end
+        else
+          p "#{post.post_id.to_i} is empty"
+          # post_id = post.post_id.to_i
+          # destropy_post = Post.where(post_id: post_id)
+          # Post.destroy(destropy_post)
+        end
+      end
+    end
+    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
-end
 
-def destroy
-end
+  def new
+    @topic = Topic.new
+  end
 
-private
+  def create
+    @topic = current_user.topics.build(topic_params)
+    @topic.topicId = @topic.topicId.split('/').last
+    if @topic.save
+      flash[:success] = 'トピックを登録しました。'
+      redirect_to @topic
+    else
+      flash.now[:danger] = 'トピックの登録に失敗しました。'
+      render :new
+    end
+  end
 
-def topic_params
-  params.require(:topic).permit(:topicId)
-end
+  def destroy
+  end
 
-def get_access_token
-  require 'net/https'
-  require 'uri'
-  require 'json'
+  private
 
-  client_id = ENV['CLIENT_ID']
-  client_secret = ENV['CLIENT_SECRET']
+  def topic_params
+    params.require(:topic).permit(:topicId)
+  end
 
-  # setup a http client
-  http = Net::HTTP.new('typetalk.in', 443)
-  http.use_ssl = true
+  def get_access_token
+    require 'net/https'
+    require 'uri'
+    require 'json'
 
-  # get an access token
-  res = http.post(
-      '/oauth2/access_token',
-      "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
-  )
-  json = JSON.parse(res.body)
-  return json['access_token']
-end
+    client_id = ENV['CLIENT_ID']
+    client_secret = ENV['CLIENT_SECRET']
 
+    # setup a http client
+    http = Net::HTTP.new('typetalk.in', 443)
+    http.use_ssl = true
+
+    # get an access token
+    res = http.post(
+        '/oauth2/access_token',
+        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+    )
+    json = JSON.parse(res.body)
+    return json['access_token']
+  end
 end
