@@ -154,17 +154,24 @@ class TopicsController < ApplicationController
   end
 
   def all
-    topics = Topic.all
-    access_token = get_access_token
     @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
+    require 'time'
+    @time = Time.now()
+  end
+
+  def all_post
+    require 'net/https'
+    require 'uri'
+    require 'json'
+    require 'time'
+
+    topics = Topic.all
+    access_token = get_access_token
+    @post_data = Array.new
+    @time = Time.now().in_time_zone
 
     topics.each do |topic|
-      require 'net/https'
-      require 'uri'
-      require 'json'
-      require 'time'
-
       posts = Post.where(topic: topic)
       http = Net::HTTP.new('typetalk.in', 443)
       http.use_ssl = true
@@ -202,21 +209,18 @@ class TopicsController < ApplicationController
   end
 
   def user
+    require 'net/https'
+    require 'uri'
+    require 'json'
+    require 'time'
+
     topics = Topic.all
     access_token = get_access_token
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
-
-    require 'ostruct'
-    # like_count = OpenStruct.new
     like_count = {}
 
     topics.each do |topic|
-      require 'net/https'
-      require 'uri'
-      require 'json'
-      require 'time'
-
       posts = Post.where(topic: topic)
       http = Net::HTTP.new('typetalk.in', 443)
       http.use_ssl = true
@@ -260,6 +264,9 @@ class TopicsController < ApplicationController
           # Post.destroy(destropy_post)
         end
       end
+    end
+    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
+  end
 
   def new
     @topic = Topic.new
@@ -276,29 +283,6 @@ class TopicsController < ApplicationController
       render :new
     end
   end
-
-  def destroy
-  end
-
-  private
-
-  def topic_params
-    params.require(:topic).permit(:topicId)
-  end
-
-  def get_access_token
-    require 'net/https'
-    require 'uri'
-    require 'json'
-
-    client_id = ENV['CLIENT_ID']
-    client_secret = ENV['CLIENT_SECRET']
-
-    # setup a http client
-    http = Net::HTTP.new('typetalk.in', 443)
-    http.use_ssl = true
-
-=======
 
   def destroy
   end

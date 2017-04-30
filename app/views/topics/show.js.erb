@@ -1,6 +1,0 @@
-if ($('#ajax-response-wrapper').size() === 0) {
-    $('body').append('<div id="ajax-response-wrapper"></div>');
-} else {
-    $('#ajax-response-wrapper').html('');
-}
-$('#ajax-response-wrapper').html('<%=j render partial: "ajax_container", collections: @post_data %>');
