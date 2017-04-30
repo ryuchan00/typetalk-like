@@ -3,9 +3,6 @@ class TopicsController < ApplicationController
   # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
   skip_before_filter :verify_authenticity_token
 
-  # ajax処理のため
-  # respond_to :html, :js
-
   def receive
     # 読み込み時に一度パースが必要
     json_request = JSON.parse(request.body.read)
@@ -157,18 +154,25 @@ class TopicsController < ApplicationController
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
-  def ajax_action
-    @time = Time.now().in_time_zone
+  def all
+    @topic_name = 'すべてのトピックの集計'
+    @post_data = Array.new
+    require 'time'
+    @time = Time.now()
+  end
+
+  def all_post
+    require 'net/https'
+    require 'uri'
+    require 'json'
+    require 'time'
+
     topics = Topic.all
     access_token = get_access_token
     @post_data = Array.new
+    @time = Time.now().in_time_zone
 
     topics.each do |topic|
-      require 'net/https'
-      require 'uri'
-      require 'json'
-      require 'time'
-
       posts = Post.where(topic: topic)
       http = Net::HTTP.new('typetalk.in', 443)
       http.use_ssl = true
@@ -257,21 +261,18 @@ class TopicsController < ApplicationController
   end
 
   def user
+    require 'net/https'
+    require 'uri'
+    require 'json'
+    require 'time'
+
     topics = Topic.all
     access_token = get_access_token
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
-
-    require 'ostruct'
-    # like_count = OpenStruct.new
     like_count = {}
 
     topics.each do |topic|
-      require 'net/https'
-      require 'uri'
-      require 'json'
-      require 'time'
-
       posts = Post.where(topic: topic)
       http = Net::HTTP.new('typetalk.in', 443)
       http.use_ssl = true
@@ -355,7 +356,6 @@ class TopicsController < ApplicationController
     # setup a http client
     http = Net::HTTP.new('typetalk.in', 443)
     http.use_ssl = true
-
     # get an access token
     res = http.post(
         '/oauth2/access_token',

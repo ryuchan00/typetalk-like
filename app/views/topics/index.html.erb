@@ -11,16 +11,13 @@
     <ul class="media-list">
       <%# @topics.each do |topic| %>
       <li class="media">
-        <div class="media-left">
-          <!--<img class="media-object img-rounded" src="<%#= @imageUrl[topic.id] %>" alt="" height="50" width="50">-->
-        </div>
         <div class="media-body">
           <p><%= link_to 'すべてのトピックの集計', topic_all_path %></p>
         </div>
       </li>
       <li class="media">
         <div class="media-body">
-          <p><%= link_to 'ユーザーごとの集計', topic_user_path, remote: true %></p>
+          <p><%= link_to 'ユーザーごとの集計', topic_user_path %></p>
         </div>
       </li>
       
