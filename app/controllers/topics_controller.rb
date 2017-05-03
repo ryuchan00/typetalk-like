@@ -92,17 +92,14 @@ class TopicsController < ApplicationController
     http = setup_http
 
     # get an access token
-    access_token = get_access_token
+    access_token = get_access_token(http)
 
     # post a message
     @post_data = Array.new
     @posts.each do |post|
-      req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-      req['Authorization'] = "Bearer #{access_token}"
-      return_json = http.request(req)
+      post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
 
-      if return_json.code == '200'
-        post_json = JSON.parse(return_json.body)
+      if post_json != false
         if @post_data.empty?
           @topic_name = post_json['topic']['name']
         end
@@ -122,12 +119,9 @@ class TopicsController < ApplicationController
           }
           @post_data.push(post_data)
         end
-        p post_data
       else
+        topic.delete_post(post)
         p "#{post.post_id.to_i} is empty"
-        # post_id = post.post_id.to_i
-        # destropy_post = Post.where(post_id: post_id)
-        # Post.destroy(destropy_post)
       end
     end
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
@@ -141,14 +135,13 @@ class TopicsController < ApplicationController
 
   def all_post
     topics = Topic.all
-    access_token = get_access_token
+    http = setup_http
+    access_token = get_access_token(http)
     @post_data = Array.new
     @time = Time.now().in_time_zone
 
     topics.each do |topic|
       posts = Post.where(topic: topic)
-      http = Net::HTTP.new('typetalk.in', 443)
-      http.use_ssl = true
 
       posts.each do |post|
         req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
@@ -234,14 +227,14 @@ class TopicsController < ApplicationController
 
   def user
     topics = Topic.all
-    access_token = get_access_token
+    http = setup_http
+    access_token = get_access_token(http)
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
     like_count = {}
 
     topics.each do |topic|
       posts = Post.where(topic: topic)
-      http = setup_http
 
       posts.each do |post|
         req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
@@ -285,13 +278,9 @@ class TopicsController < ApplicationController
   end
 
   def past_post
-    # p params[:id]
-    # topic2 = Topic.where(topicId: params[:id])
-    # p topic2
     topic = Topic.find_by(topicId: params[:id])
-    # p topic
-    access_token = get_access_token
     http = setup_http
+    access_token = get_access_token(http)
     res_body = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
     res_body['posts'].each do |post|
       if Post.where(post_id: post['id']).exists? then
@@ -337,13 +326,13 @@ class TopicsController < ApplicationController
     params.require(:topic).permit(:topicId)
   end
 
-  def get_access_token
+  def get_access_token(http)
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
 
     # setup a http client
-    http = Net::HTTP.new('typetalk.in', 443)
-    http.use_ssl = true
+    # http = Net::HTTP.new('typetalk.in', 443)
+    # http.use_ssl = true
     # get an access token
     res = http.post(
         '/oauth2/access_token',
@@ -367,8 +356,6 @@ class TopicsController < ApplicationController
     req['Authorization'] = "Bearer #{access_token}"
     res = http.request(req)
     if res.code != '200'
-      p "fail call api"
-      p "url:#{url}"
       return false
     end
     return JSON.parse(res.body)
