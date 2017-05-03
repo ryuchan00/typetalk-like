@@ -20,7 +20,8 @@ class TopicsController < ApplicationController
       post = json_request
       @post = Post.new
       topic = Topic.find_or_initialize_by(topicId: post["topic"]["id"].to_s)
-      if topic.new_record? # 新規作成の場合は保存
+      if topic.new_record?
+        # 新規作成の場合は保存
         # 新規作成時に行いたい処理を記述
         if topic.save
           p 'トピックを登録しました。'
@@ -46,12 +47,6 @@ class TopicsController < ApplicationController
   def index
     @user = current_user
     @topics = Topic.all
-
-    require 'net/https'
-    require 'uri'
-    require 'json'
-    require 'time'
-
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
 
@@ -92,12 +87,6 @@ class TopicsController < ApplicationController
       topic = Topic.find_by(topicId: param_topic_id)
       @posts = Post.where(topic: topic)
     end
-
-    require 'net/https'
-    require 'uri'
-    require 'json'
-    require 'time'
-
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
 
@@ -156,16 +145,10 @@ class TopicsController < ApplicationController
   def all
     @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
-    require 'time'
     @time = Time.now()
   end
 
   def all_post
-    require 'net/https'
-    require 'uri'
-    require 'json'
-    require 'time'
-
     topics = Topic.all
     access_token = get_access_token
     @post_data = Array.new
@@ -208,12 +191,57 @@ class TopicsController < ApplicationController
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
-  def user
-    require 'net/https'
-    require 'uri'
-    require 'json'
-    require 'time'
+  # def all
+  # topics = Topic.all
+  # access_token = get_access_token
+  # @topic_name = 'すべてのトピックの集計'
+  # @post_data = Array.new
+  # require 'time'
+  # @time = Time.now()
 
+  # topics.each do |topic|
+  #   require 'net/https'
+  #   require 'uri'
+  #   require 'json'
+  #   require 'time'
+  #
+  #   posts = Post.where(topic: topic)
+  #   http = Net::HTTP.new('typetalk.in', 443)
+  #   http.use_ssl = true
+  #
+  #   posts.each do |post|
+  #     req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+  #     req['Authorization'] = "Bearer #{access_token}"
+  #     return_json = http.request(req)
+  #     if return_json.code == '200'
+  #       post_json = JSON.parse(return_json.body)
+  #       if post_json['post']['likes'].count != 0 then
+  #         created_time = post_json['post']['createdAt']
+  #         created_time_to_time = Time.parse(created_time).in_time_zone
+  #
+  #         post_data = {
+  #             "post_id" => post_json['post']['id'],
+  #             "topic_id" => post_json['post']['topicId'],
+  #             "name" => post_json['post']['account']['fullName'],
+  #             "message" => post_json['post']['message'],
+  #             "like" => post_json['post']['likes'].count,
+  #             "imageUrl" => post_json['post']['account']['imageUrl'],
+  #             "created_at" => created_time_to_time.to_s
+  #         }
+  #         @post_data.push(post_data)
+  #       end
+  #     else
+  #       p "#{post.post_id.to_i} is empty"
+  #       # post_id = post.post_id.to_i
+  #       # destropy_post = Post.where(post_id: post_id)
+  #       # Post.destroy(destropy_post)
+  #     end
+  #   end
+  # end
+  # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
+  # end
+
+  def user
     topics = Topic.all
     access_token = get_access_token
     @topic_name = 'ユーザーごとの集計'
@@ -268,6 +296,10 @@ class TopicsController < ApplicationController
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
+  def past_post
+    @post_data = Array.new
+  end
+
   def new
     @topic = Topic.new
   end
@@ -294,10 +326,6 @@ class TopicsController < ApplicationController
   end
 
   def get_access_token
-    require 'net/https'
-    require 'uri'
-    require 'json'
-
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
 

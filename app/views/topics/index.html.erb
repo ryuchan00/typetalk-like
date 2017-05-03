@@ -12,7 +12,7 @@
       <%# @topics.each do |topic| %>
       <li class="media">
         <div class="media-body">
-          <p><%= link_to 'すべてのトピックの集計', topic_all_path %></p>
+          <p><%= link_to 'すべてのトピックの集計', topic_all_path, data: {no_turbolink: true} %></p>
         </div>
       </li>
       <li class="media">
@@ -20,7 +20,7 @@
           <p><%= link_to 'ユーザーごとの集計', topic_user_path %></p>
         </div>
       </li>
-      
+
       <% @name.each do |name| %>
           <%# user = topic['name'] %>
           <li class="media">
@@ -34,6 +34,7 @@
                 <p><%= link_to '詳細', topic_path(:id => name['id']) %></p>
                 <!--<p><%#= link_to 'typetalkで見る', "https://typetalk.in/topics/#{topic.topicId}", :target => ["_blank"] %></p>-->
                 <p><%= link_to 'typetalkで見る', "https://typetalk.in/topics/#{name['id']}", :target => ["_blank"] %></p>
+                <%= button_to '新規作成', :action => 'past_post' %>
               </div>
             </div>
           </li>
