@@ -20,6 +20,12 @@
           <p><%= link_to 'ユーザーごとの集計', topic_user_path %></p>
         </div>
       </li>
+      <li class="media">
+        <div class="media-body">
+          <p><%= link_to 'すべてのトピックの情報を最新に更新する', update_latest_path %></p>
+          <p>この作業には時間がかかります</p>
+        </div>
+      </li>
 
       <% @name.each do |name| %>
           <%# user = topic['name'] %>

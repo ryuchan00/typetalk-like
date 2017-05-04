@@ -32,6 +32,8 @@ class TopicsController < ApplicationController
       @post.topic = topic
       @post.post_id = post["post"]["id"].to_s
       @post.post_user_name = post["post"]["account"]["name"].to_s
+      @post.like = post['likes'].count
+      @post.posted = Time.parse(post['createdAt']).in_time_zone
       if @post.save
         p '投稿を登録しました。'
       else
@@ -84,8 +86,8 @@ class TopicsController < ApplicationController
   def show
     param_topic_id = params[:id]
     if Topic.where(topicId: param_topic_id).exists?
-      topic = Topic.find_by(topicId: param_topic_id)
-      @posts = Post.where(topic: topic)
+      topic = Topic.find_by(topicId:  param_topic_id)
+      @posts = Post.where(["`like` >= :like and `topic_id` = :topic", {like: 1, topic: topic.id}]).order("`like` DESC")
     end
 
     # setup a http client
@@ -124,7 +126,7 @@ class TopicsController < ApplicationController
         p "#{post.post_id.to_i} is empty"
       end
     end
-    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
+    # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
   def all
@@ -165,10 +167,8 @@ class TopicsController < ApplicationController
             @post_data.push(post_data)
           end
         else
+          topic.delete_post(post)
           p "#{post.post_id.to_i} is empty"
-          # post_id = post.post_id.to_i
-          # destropy_post = Post.where(post_id: post_id)
-          # Post.destroy(destropy_post)
         end
       end
     end
@@ -267,16 +267,15 @@ class TopicsController < ApplicationController
             end
           end
         else
+          topic.delete_post(post)
           p "#{post.post_id.to_i} is empty"
-          # post_id = post.post_id.to_i
-          # destropy_post = Post.where(post_id: post_id)
-          # Post.destroy(destropy_post)
         end
       end
     end
     @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
+  #対象トピックの過去200件のいいね数を取得
   def past_post
     topic = Topic.find_by(topicId: params[:id])
     http = setup_http
@@ -290,10 +289,36 @@ class TopicsController < ApplicationController
         @post.topic = topic
         @post.post_id = post['id'].to_s
         @post.post_user_name = post['account']['name'].to_s
+        @post.like = post['likes'].count
+        @post.posted = Time.parse(post['createdAt']).in_time_zone
         if @post.save
           p '投稿を登録しました。'
         else
           p '投稿の登録に失敗しました。'
+        end
+      end
+    end
+    flash[:success] = '処理が終了しました。'
+    redirect_to :back
+  end
+
+  def update_latest
+    topics = Topic.all
+    http = setup_http
+    access_token = get_access_token(http)
+
+    topics.each do |topic|
+      posts = Post.where(topic: topic)
+
+      posts.each do |post|
+        res_body = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+        if res_body != false
+          post.like = res_body['post']['likes'].count
+          post.posted = Time.parse(res_body['post']['createdAt']).in_time_zone
+          post.save
+        else
+          topic.delete_post(post)
+          p "#{post.post_id.to_i} is empty"
         end
       end
     end
@@ -330,9 +355,6 @@ class TopicsController < ApplicationController
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
 
-    # setup a http client
-    # http = Net::HTTP.new('typetalk.in', 443)
-    # http.use_ssl = true
     # get an access token
     res = http.post(
         '/oauth2/access_token',
@@ -360,4 +382,5 @@ class TopicsController < ApplicationController
     end
     return JSON.parse(res.body)
   end
+
 end

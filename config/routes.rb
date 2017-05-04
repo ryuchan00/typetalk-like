@@ -14,8 +14,9 @@ Rails.application.routes.draw do
   get 'topic_all', to: 'topics#all'
   get 'topics/all_post', to: 'topics#all_post'
   get 'topic_user', to: 'topics#user'
-  # get 'past_post', to: 'topics#past_post'
+  get 'past_post', to: 'topics#past_post'
   post 'past_post', to: 'topics#past_post'
+  get 'update_latest', to: 'topics#update_latest'
 
   resources :users, only: [:index, :show, :new, :create] do
     # member do
