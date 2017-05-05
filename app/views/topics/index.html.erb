@@ -40,7 +40,7 @@
                 <p><%= link_to '詳細', topic_path(:id => name['id']), class: 'btn btn-sm btn-primary' %></p>
                 <!--<p><%#= link_to 'typetalkで見る', "https://typetalk.in/topics/#{topic.topicId}", :target => ["_blank"] %></p>-->
                 <p><%= link_to 'typetalkで見る', "https://typetalk.in/topics/#{name['id']}", :target => ["_blank"], class: 'btn btn-sm btn-primary' %></p>
-                <p><%= link_to '過去の投稿を取得する', past_post_path(:id => name['id']), class: 'btn btn-sm btn-primary', method: :post %></p>
+                <p><%= link_to '過去の投稿を取得する', past_post_path(:id => name['id']), class: 'btn btn-sm btn-primary', method: :post %> 最終更新日：<%= name['updated_at'] %></p>
               </div>
             </div>
           </li>

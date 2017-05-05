@@ -63,8 +63,11 @@ class TopicsController < ApplicationController
 
         if return_json.code == '200'
           topic_info = JSON.parse(return_json.body)
-          @name.push({"id" => topic_info['topic']['id'].to_s,
-                      "name" => topic_info['topic']['name'].to_s})
+          @name.push({
+                         "id" => topic_info['topic']['id'].to_s,
+                         "name" => topic_info['topic']['name'].to_s,
+                         "updated_at" => topic.updated_at.in_time_zone
+                     })
         end
       end
     end
@@ -212,44 +215,6 @@ class TopicsController < ApplicationController
         @post_data.push(post_data)
       end
     end
-
-    # posts.each do |post|
-    #   req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-    #   req['Authorization'] = "Bearer #{access_token}"
-    #   return_json = http.request(req)
-    #
-    #   if return_json.code == '200'
-    #     post_json = JSON.parse(return_json.body)
-    #     if post_json['post']['likes'].count != 0 then
-    #       if like_count[post_json['post']['account']['name'].to_sym] == nil then
-    #         like_count[post_json['post']['account']['name'].to_sym] = post_json['post']['likes'].count
-    #       else
-    #         like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
-    #       end
-    #       key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
-    #
-    #       if key.nil? then
-    #         post_data = {
-    #             "name" => post_json['post']['account']['fullName'],
-    #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-    #             "imageUrl" => post_json['post']['account']['imageUrl']
-    #         }
-    #         @post_data.push(post_data)
-    #       else
-    #         @post_data[key] = {
-    #             "name" => post_json['post']['account']['fullName'],
-    #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-    #             "imageUrl" => post_json['post']['account']['imageUrl']
-    #         }
-    #       end
-    #     end
-    #   else
-    #     # topic.delete_post(post)
-    #     p "#{post.post_id.to_i} is empty"
-    #   end
-    # end
-    # end
-    # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
   #対象トピックの過去200件のいいね数を取得
@@ -273,6 +238,8 @@ class TopicsController < ApplicationController
         end
         @post.save
       end
+      topic.updated_at = Time.now()
+      topic.save
       flash[:success] = '処理が終了しました。'
     else
       flash[:success] = 'トピックが見つかりません、管理者に問い合わせてください。'
