@@ -50,7 +50,7 @@ class TopicsController < ApplicationController
     @user = current_user
     @topics = Topic.all
     http = setup_http
-    access_token = get_access_token(http)
+    access_token = get_access_token(http, "topic.read")
 
     @name = Array.new
     @imageUrl = Array.new
@@ -81,7 +81,7 @@ class TopicsController < ApplicationController
     http = setup_http
 
     # get an access token
-    access_token = get_access_token(http)
+    access_token = get_access_token(http, "topic.read")
 
     # post a message
     @post_data = Array.new
@@ -166,7 +166,7 @@ class TopicsController < ApplicationController
     @post_data = Array.new
     @time = Time.now()
     http = setup_http
-    access_token = get_access_token(http)
+    access_token = get_access_token(http, "topic.read")
     @posts = Post.where(like: 1..100000).order(like: :desc).page(params[:page]).per(10)
 
     @posts.each do |post|
@@ -194,16 +194,24 @@ class TopicsController < ApplicationController
   end
 
   def user
-    # topics = Topic.all
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
     http = setup_http
-    access_token = get_access_token(http)
-    like_count = {}
-
-    # topics.each do |topic|
-    #   posts = Post.where(topic: topic)
+    access_token = get_access_token(http, "my")
     @posts = Post.order("sum_like DESC").group(:post_user_name).sum(:like)
+
+    @posts.each do |name, like|
+      res = call_api(access_token, http, "/api/v1/accounts/profile/#{name}")
+      if res != false
+        post_data = {
+            'name' => name,
+            'fullName' => res['account']['fullName'],
+            'like' => like,
+            'imageUrl' => res['account']['imageUrl']
+        }
+        @post_data.push(post_data)
+      end
+    end
 
     # posts.each do |post|
     #   req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
@@ -248,7 +256,7 @@ class TopicsController < ApplicationController
   def past_post
     topic = Topic.find_by(topicId: params[:id])
     http = setup_http
-    access_token = get_access_token(http)
+    access_token = get_access_token(http, "topic.read")
     res = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
     if res != false
       res['posts'].each do |post|
@@ -275,7 +283,7 @@ class TopicsController < ApplicationController
   def update_latest
     topics = Topic.all
     http = setup_http
-    access_token = get_access_token(http)
+    access_token = get_access_token(http, "topic.read")
 
     topics.each do |topic|
       posts = Post.where(topic: topic)
@@ -322,14 +330,14 @@ class TopicsController < ApplicationController
   end
 
   #typetalkのアクセストークンを生成する。
-  def get_access_token(http)
+  def get_access_token(http, scope)
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
 
     # get an access token
     res = http.post(
         '/oauth2/access_token',
-        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
+        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=#{scope}"
     )
     if res.code != '200'
       return false
