@@ -74,7 +74,7 @@ class TopicsController < ApplicationController
     param_topic_id = params[:id]
     if Topic.where(topicId: param_topic_id).exists?
       topic = Topic.find_by(topicId: param_topic_id)
-      @posts = Post.where(["`like` >= :like and `topic_id` = :topic", {like: 1, topic: topic.id}]).order("`like` DESC").page(params[:page]).per(10)
+      @posts = Post.where(like: 1..100000, topic_id: topic.id).order(like: :desc).page(params[:page]).per(10)
     end
 
     # setup a http client
@@ -167,7 +167,7 @@ class TopicsController < ApplicationController
     @time = Time.now()
     http = setup_http
     access_token = get_access_token(http)
-    @posts = Post.where(["`like` >= :like", {like: 1}]).order("`like` DESC").page(params[:page]).per(10)
+    @posts = Post.where(like: 1..100000).order(like: :desc).page(params[:page]).per(10)
 
     @posts.each do |post|
       topic = Topic.find(post.topic_id)
@@ -204,43 +204,42 @@ class TopicsController < ApplicationController
     # topics.each do |topic|
     #   posts = Post.where(topic: topic)
     @posts = Post.order("sum_like DESC").group(:post_user_name).sum(:like)
-    p @posts
 
-      # posts.each do |post|
-      #   req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-      #   req['Authorization'] = "Bearer #{access_token}"
-      #   return_json = http.request(req)
-      #
-      #   if return_json.code == '200'
-      #     post_json = JSON.parse(return_json.body)
-      #     if post_json['post']['likes'].count != 0 then
-      #       if like_count[post_json['post']['account']['name'].to_sym] == nil then
-      #         like_count[post_json['post']['account']['name'].to_sym] = post_json['post']['likes'].count
-      #       else
-      #         like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
-      #       end
-      #       key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
-      #
-      #       if key.nil? then
-      #         post_data = {
-      #             "name" => post_json['post']['account']['fullName'],
-      #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-      #             "imageUrl" => post_json['post']['account']['imageUrl']
-      #         }
-      #         @post_data.push(post_data)
-      #       else
-      #         @post_data[key] = {
-      #             "name" => post_json['post']['account']['fullName'],
-      #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-      #             "imageUrl" => post_json['post']['account']['imageUrl']
-      #         }
-      #       end
-      #     end
-      #   else
-      #     # topic.delete_post(post)
-      #     p "#{post.post_id.to_i} is empty"
-      #   end
-      # end
+    # posts.each do |post|
+    #   req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+    #   req['Authorization'] = "Bearer #{access_token}"
+    #   return_json = http.request(req)
+    #
+    #   if return_json.code == '200'
+    #     post_json = JSON.parse(return_json.body)
+    #     if post_json['post']['likes'].count != 0 then
+    #       if like_count[post_json['post']['account']['name'].to_sym] == nil then
+    #         like_count[post_json['post']['account']['name'].to_sym] = post_json['post']['likes'].count
+    #       else
+    #         like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
+    #       end
+    #       key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
+    #
+    #       if key.nil? then
+    #         post_data = {
+    #             "name" => post_json['post']['account']['fullName'],
+    #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
+    #             "imageUrl" => post_json['post']['account']['imageUrl']
+    #         }
+    #         @post_data.push(post_data)
+    #       else
+    #         @post_data[key] = {
+    #             "name" => post_json['post']['account']['fullName'],
+    #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
+    #             "imageUrl" => post_json['post']['account']['imageUrl']
+    #         }
+    #       end
+    #     end
+    #   else
+    #     # topic.delete_post(post)
+    #     p "#{post.post_id.to_i} is empty"
+    #   end
+    # end
     # end
     # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
@@ -255,7 +254,6 @@ class TopicsController < ApplicationController
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
           @post = Post.find_by(post_id: post['id'])
-          p @post
           @post.like = post['likes'].count
         else
           @post = Post.new
