@@ -255,6 +255,7 @@ class TopicsController < ApplicationController
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
           @post = Post.find_by(post_id: post['id'])
+          p @post
           @post.like = post['likes'].count
         else
           @post = Post.new
