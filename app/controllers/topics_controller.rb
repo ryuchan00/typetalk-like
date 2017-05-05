@@ -1,5 +1,5 @@
 class TopicsController < ApplicationController
-  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :user]
+  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :all_post, :user, :past_post, :update_latest]
   # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
   skip_before_filter :verify_authenticity_token
 
@@ -49,26 +49,13 @@ class TopicsController < ApplicationController
   def index
     @user = current_user
     @topics = Topic.all
-    client_id = ENV['CLIENT_ID']
-    client_secret = ENV['CLIENT_SECRET']
-
-    # setup a http client
-    http = Net::HTTP.new('typetalk.in', 443)
-    http.use_ssl = true
-
-    # get an access token
-    res = http.post(
-        '/oauth2/access_token',
-        "client_id=#{client_id}&client_secret=#{client_secret}&grant_type=client_credentials&scope=topic.read"
-    )
+    http = setup_http
+    access_token = get_access_token(http)
 
     @name = Array.new
     @imageUrl = Array.new
 
-    if res.code == '200'
-      json = JSON.parse(res.body)
-      access_token = json['access_token']
-
+    if access_token != false
       @topics.each do |topic|
         req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}/details")
         req['Authorization'] = "Bearer #{access_token}"
@@ -86,8 +73,8 @@ class TopicsController < ApplicationController
   def show
     param_topic_id = params[:id]
     if Topic.where(topicId: param_topic_id).exists?
-      topic = Topic.find_by(topicId:  param_topic_id)
-      @posts = Post.where(["`like` >= :like and `topic_id` = :topic", {like: 1, topic: topic.id}]).order("`like` DESC")
+      topic = Topic.find_by(topicId: param_topic_id)
+      @posts = Post.where(["`like` >= :like and `topic_id` = :topic", {like: 1, topic: topic.id}]).order("`like` DESC").page(params[:page]).per(10)
     end
 
     # setup a http client
@@ -351,6 +338,7 @@ class TopicsController < ApplicationController
     params.require(:topic).permit(:topicId)
   end
 
+  #typetalkのアクセストークンを生成する。
   def get_access_token(http)
     client_id = ENV['CLIENT_ID']
     client_secret = ENV['CLIENT_SECRET']
@@ -367,12 +355,14 @@ class TopicsController < ApplicationController
     return json['access_token']
   end
 
+  #httpインスタンスを生成する。
   def setup_http
     http = Net::HTTP.new('typetalk.in', 443)
     http.use_ssl = true
     return http
   end
 
+  #accesstokenとhttpオブジェクトからapiを呼び出す。
   def call_api(access_token, http, url)
     req = Net::HTTP::Get.new(url.to_s)
     req['Authorization'] = "Bearer #{access_token}"
