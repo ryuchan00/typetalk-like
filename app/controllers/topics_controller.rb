@@ -102,7 +102,7 @@ class TopicsController < ApplicationController
               "topic_id" => post_json['post']['topicId'],
               "name" => post_json['post']['account']['fullName'],
               "message" => post_json['post']['message'],
-              "like" => post_json['post']['likes'].count,
+              "like" => post.like,
               "imageUrl" => post_json['post']['account']['imageUrl'],
               "created_at" => created_time_to_time.to_s
           }
@@ -113,153 +113,136 @@ class TopicsController < ApplicationController
         p "#{post.post_id.to_i} is empty"
       end
     end
-    # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
+
+  # def all
+  #   @topic_name = 'すべてのトピックの集計'
+  #   @post_data = Array.new
+  #   @time = Time.now()
+  # end
+
+  # def all_post
+  #   topics = Topic.all
+  #   http = setup_http
+  #   access_token = get_access_token(http)
+  #   @post_data = Array.new
+  #   @time = Time.now().in_time_zone
+  #
+  #   topics.each do |topic|
+  #     posts = Post.where(topic: topic)
+  #
+  #     posts.each do |post|
+  #       req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+  #       req['Authorization'] = "Bearer #{access_token}"
+  #       return_json = http.request(req)
+  #       if return_json.code == '200'
+  #         post_json = JSON.parse(return_json.body)
+  #         if post_json['post']['likes'].count != 0 then
+  #           created_time = post_json['post']['createdAt']
+  #           created_time_to_time = Time.parse(created_time).in_time_zone
+  #
+  #           post_data = {
+  #               "post_id" => post_json['post']['id'],
+  #               "topic_id" => post_json['post']['topicId'],
+  #               "name" => post_json['post']['account']['fullName'],
+  #               "message" => post_json['post']['message'],
+  #               "like" => post_json['post']['likes'].count,
+  #               "imageUrl" => post_json['post']['account']['imageUrl'],
+  #               "created_at" => created_time_to_time.to_s
+  #           }
+  #           @post_data.push(post_data)
+  #         end
+  #       else
+  #         topic.delete_post(post)
+  #         p "#{post.post_id.to_i} is empty"
+  #       end
+  #     end
+  #   end
+  #   @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
+  # end
 
   def all
     @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
     @time = Time.now()
-  end
-
-  def all_post
-    topics = Topic.all
     http = setup_http
     access_token = get_access_token(http)
-    @post_data = Array.new
-    @time = Time.now().in_time_zone
+    @posts = Post.where(["`like` >= :like", {like: 1}]).order("`like` DESC").page(params[:page]).per(10)
 
-    topics.each do |topic|
-      posts = Post.where(topic: topic)
+    @posts.each do |post|
+      topic = Topic.find(post.topic_id)
+      res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+      if res != false
+        created_time = res['post']['createdAt']
+        created_time_to_time = Time.parse(created_time).in_time_zone
 
-      posts.each do |post|
-        req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-        req['Authorization'] = "Bearer #{access_token}"
-        return_json = http.request(req)
-        if return_json.code == '200'
-          post_json = JSON.parse(return_json.body)
-          if post_json['post']['likes'].count != 0 then
-            created_time = post_json['post']['createdAt']
-            created_time_to_time = Time.parse(created_time).in_time_zone
-
-            post_data = {
-                "post_id" => post_json['post']['id'],
-                "topic_id" => post_json['post']['topicId'],
-                "name" => post_json['post']['account']['fullName'],
-                "message" => post_json['post']['message'],
-                "like" => post_json['post']['likes'].count,
-                "imageUrl" => post_json['post']['account']['imageUrl'],
-                "created_at" => created_time_to_time.to_s
-            }
-            @post_data.push(post_data)
-          end
-        else
-          topic.delete_post(post)
-          p "#{post.post_id.to_i} is empty"
-        end
+        post_data = {
+            "post_id" => res['post']['id'],
+            "topic_id" => res['post']['topicId'],
+            "name" => res['post']['account']['fullName'],
+            "message" => res['post']['message'],
+            "like" => post.like,
+            "imageUrl" => res['post']['account']['imageUrl'],
+            "created_at" => created_time_to_time.to_s
+        }
+        @post_data.push(post_data)
+      else
+        topic.delete_post(post)
+        p "#{post.post_id.to_i} is empty"
       end
     end
-    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
-
-  # def all
-  # topics = Topic.all
-  # access_token = get_access_token
-  # @topic_name = 'すべてのトピックの集計'
-  # @post_data = Array.new
-  # require 'time'
-  # @time = Time.now()
-
-  # topics.each do |topic|
-  #   require 'net/https'
-  #   require 'uri'
-  #   require 'json'
-  #   require 'time'
-  #
-  #   posts = Post.where(topic: topic)
-  #   http = Net::HTTP.new('typetalk.in', 443)
-  #   http.use_ssl = true
-  #
-  #   posts.each do |post|
-  #     req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-  #     req['Authorization'] = "Bearer #{access_token}"
-  #     return_json = http.request(req)
-  #     if return_json.code == '200'
-  #       post_json = JSON.parse(return_json.body)
-  #       if post_json['post']['likes'].count != 0 then
-  #         created_time = post_json['post']['createdAt']
-  #         created_time_to_time = Time.parse(created_time).in_time_zone
-  #
-  #         post_data = {
-  #             "post_id" => post_json['post']['id'],
-  #             "topic_id" => post_json['post']['topicId'],
-  #             "name" => post_json['post']['account']['fullName'],
-  #             "message" => post_json['post']['message'],
-  #             "like" => post_json['post']['likes'].count,
-  #             "imageUrl" => post_json['post']['account']['imageUrl'],
-  #             "created_at" => created_time_to_time.to_s
-  #         }
-  #         @post_data.push(post_data)
-  #       end
-  #     else
-  #       p "#{post.post_id.to_i} is empty"
-  #       # post_id = post.post_id.to_i
-  #       # destropy_post = Post.where(post_id: post_id)
-  #       # Post.destroy(destropy_post)
-  #     end
-  #   end
-  # end
-  # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
-  # end
 
   def user
-    topics = Topic.all
-    http = setup_http
-    access_token = get_access_token(http)
+    # topics = Topic.all
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
+    http = setup_http
+    access_token = get_access_token(http)
     like_count = {}
 
-    topics.each do |topic|
-      posts = Post.where(topic: topic)
+    # topics.each do |topic|
+    #   posts = Post.where(topic: topic)
+    @posts = Post.order("sum_like DESC").group(:post_user_name).sum(:like)
+    p @posts
 
-      posts.each do |post|
-        req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-        req['Authorization'] = "Bearer #{access_token}"
-        return_json = http.request(req)
-
-        if return_json.code == '200'
-          post_json = JSON.parse(return_json.body)
-          if post_json['post']['likes'].count != 0 then
-            if like_count[post_json['post']['account']['name'].to_sym] == nil then
-              like_count[post_json['post']['account']['name'].to_sym] = post_json['post']['likes'].count
-            else
-              like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
-            end
-            key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
-
-            if key.nil? then
-              post_data = {
-                  "name" => post_json['post']['account']['fullName'],
-                  "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-                  "imageUrl" => post_json['post']['account']['imageUrl']
-              }
-              @post_data.push(post_data)
-            else
-              @post_data[key] = {
-                  "name" => post_json['post']['account']['fullName'],
-                  "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
-                  "imageUrl" => post_json['post']['account']['imageUrl']
-              }
-            end
-          end
-        else
-          topic.delete_post(post)
-          p "#{post.post_id.to_i} is empty"
-        end
-      end
-    end
-    @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
+      # posts.each do |post|
+      #   req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+      #   req['Authorization'] = "Bearer #{access_token}"
+      #   return_json = http.request(req)
+      #
+      #   if return_json.code == '200'
+      #     post_json = JSON.parse(return_json.body)
+      #     if post_json['post']['likes'].count != 0 then
+      #       if like_count[post_json['post']['account']['name'].to_sym] == nil then
+      #         like_count[post_json['post']['account']['name'].to_sym] = post_json['post']['likes'].count
+      #       else
+      #         like_count[post_json['post']['account']['name'].to_sym] += post_json['post']['likes'].count
+      #       end
+      #       key = @post_data.index { |item| item["name"] == post_json['post']['account']['fullName'] }
+      #
+      #       if key.nil? then
+      #         post_data = {
+      #             "name" => post_json['post']['account']['fullName'],
+      #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
+      #             "imageUrl" => post_json['post']['account']['imageUrl']
+      #         }
+      #         @post_data.push(post_data)
+      #       else
+      #         @post_data[key] = {
+      #             "name" => post_json['post']['account']['fullName'],
+      #             "like" => like_count[post_json['post']['account']['name'].to_sym].to_i,
+      #             "imageUrl" => post_json['post']['account']['imageUrl']
+      #         }
+      #       end
+      #     end
+      #   else
+      #     # topic.delete_post(post)
+      #     p "#{post.post_id.to_i} is empty"
+      #   end
+      # end
+    # end
+    # @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
   end
 
   #対象トピックの過去200件のいいね数を取得
@@ -267,25 +250,26 @@ class TopicsController < ApplicationController
     topic = Topic.find_by(topicId: params[:id])
     http = setup_http
     access_token = get_access_token(http)
-    res_body = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
-    res_body['posts'].each do |post|
-      if Post.where(post_id: post['id']).exists? then
-        p "#{post['id']} is exist"
-      else
-        @post = Post.new
-        @post.topic = topic
-        @post.post_id = post['id'].to_s
-        @post.post_user_name = post['account']['name'].to_s
-        @post.like = post['likes'].count
-        @post.posted = Time.parse(post['createdAt']).in_time_zone
-        if @post.save
-          p '投稿を登録しました。'
+    res = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+    if res != false
+      res['posts'].each do |post|
+        if Post.where(post_id: post['id']).exists? then
+          @post = Post.find_by(post_id: post['id'])
+          @post.like = post['likes'].count
         else
-          p '投稿の登録に失敗しました。'
+          @post = Post.new
+          @post.topic = topic
+          @post.post_id = post['id'].to_s
+          @post.post_user_name = post['account']['name'].to_s
+          @post.like = post['likes'].count
+          @post.posted = Time.parse(post['createdAt']).in_time_zone
         end
+        @post.save
       end
+      flash[:success] = '処理が終了しました。'
+    else
+      flash[:success] = 'トピックが見つかりません、管理者に問い合わせてください。'
     end
-    flash[:success] = '処理が終了しました。'
     redirect_to :back
   end
 
