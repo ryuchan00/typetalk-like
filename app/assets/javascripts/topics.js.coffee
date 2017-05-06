@@ -1,5 +1,5 @@
 $('.topics.all').ready ->
-  alert("test")
+#  alert("test")
 $.ajax
   url: 'topics/all_post'
   type: 'GET'

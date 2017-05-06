@@ -6,8 +6,19 @@
       </div>
     </div>
     <p id="time"><%= @time %></p>
+    <%= form_for @form, url: '/topic_all', method: :get do |f| %>
+        <p>
+          <%= f.label :from, '表示期間:' %>
+          <%= f.datetime_select :from, :default => Time.now - 1.month %> 〜
+          <%= f.datetime_select :to %>
+        </p>
+        <p>
+          <%= f.submit '検索する' %>
+        </p>
+    <% end %>
   </aside>
   <div class="col-md-8 col-xs-12">
+    <h1><%= Time.now().beginning_of_month %>～<%= Time.now().end_of_month %>の集計</h1>
     <ul class="media-list" id="ajax_list">
       <% @post_data.each do |post| %>
           <% user = post['name'] %>

@@ -1,5 +1,7 @@
 class TopicsController < ApplicationController
   before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :all_post, :user, :past_post, :update_latest]
+  before_action :search_form, only: :all
+
   # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
   skip_before_filter :verify_authenticity_token
 
@@ -118,59 +120,26 @@ class TopicsController < ApplicationController
     end
   end
 
-  # def all
-  #   @topic_name = 'すべてのトピックの集計'
-  #   @post_data = Array.new
-  #   @time = Time.now()
-  # end
-
-  # def all_post
-  #   topics = Topic.all
-  #   http = setup_http
-  #   access_token = get_access_token(http)
-  #   @post_data = Array.new
-  #   @time = Time.now().in_time_zone
-  #
-  #   topics.each do |topic|
-  #     posts = Post.where(topic: topic)
-  #
-  #     posts.each do |post|
-  #       req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-  #       req['Authorization'] = "Bearer #{access_token}"
-  #       return_json = http.request(req)
-  #       if return_json.code == '200'
-  #         post_json = JSON.parse(return_json.body)
-  #         if post_json['post']['likes'].count != 0 then
-  #           created_time = post_json['post']['createdAt']
-  #           created_time_to_time = Time.parse(created_time).in_time_zone
-  #
-  #           post_data = {
-  #               "post_id" => post_json['post']['id'],
-  #               "topic_id" => post_json['post']['topicId'],
-  #               "name" => post_json['post']['account']['fullName'],
-  #               "message" => post_json['post']['message'],
-  #               "like" => post_json['post']['likes'].count,
-  #               "imageUrl" => post_json['post']['account']['imageUrl'],
-  #               "created_at" => created_time_to_time.to_s
-  #           }
-  #           @post_data.push(post_data)
-  #         end
-  #       else
-  #         topic.delete_post(post)
-  #         p "#{post.post_id.to_i} is empty"
-  #       end
-  #     end
-  #   end
-  #   @post_data = @post_data.sort { |a, b| b['like'] <=> a['like'] }
-  # end
-
   def all
     @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
     @time = Time.now()
+    # p params.require(:term_find_form)
+    # if params.require(:term_find_form).empty?
+    #   p "true"
+    # else
+    #   p "false"
+    # end
+    @form = TermFindForm.new
+    # if @form.valid?
+    #   p "then"
+    # else
+    #   p "else"
+    # end
+    # @form = TermFindForm.new(params.require(:term_find_form))
     http = setup_http
     access_token = get_access_token(http, "topic.read")
-    @posts = Post.where(like: 1..100000).order(like: :desc).page(params[:page]).per(10)
+    @posts = Post.where(like: 1..100000, posted: Time.now().beginning_of_month..Time.now().end_of_month).order(like: :desc).page(params[:page]).per(10)
 
     @posts.each do |post|
       topic = Topic.find(post.topic_id)
@@ -329,6 +298,15 @@ class TopicsController < ApplicationController
       return false
     end
     return JSON.parse(res.body)
+  end
+
+  def search_form
+    # if params.require(:term_find_form)present? then
+    #   p "tureだよ"
+    # else
+    #   p "elseだよ"
+    # end
+    # @search = TermFindForm.new(params.require(:term_find_form))
   end
 
 end
