@@ -18,6 +18,8 @@ Rails.application.routes.draw do
   post 'past_post', to: 'topics#past_post'
   post 'all_process', to: 'topics#all_process'
   get 'update_latest', to: 'topics#update_latest'
+  get 'keywd', to: 'record#keywd'
+  post 'keywd_process', to: 'record#keywd_process'
 
   resources :users, only: [:index, :show, :new, :create] do
     # member do
