@@ -1,5 +1,5 @@
 class TopicsController < ApplicationController
-  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :all_post, :user, :past_post, :update_latest]
+  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :all_process, :user, :past_post, :update_latest]
   before_action :search_form, only: :all
 
   # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
@@ -120,23 +120,45 @@ class TopicsController < ApplicationController
     end
   end
 
+  #全トピックの集計を表示
   def all
     @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
-    @time = Time.now()
-    # p params.require(:term_find_form)
-    # if params.require(:term_find_form).empty?
-    #   p "true"
-    # else
-    #   p "false"
-    # end
     @form = TermFindForm.new
-    # if @form.valid?
-    #   p "then"
-    # else
-    #   p "else"
-    # end
-    # @form = TermFindForm.new(params.require(:term_find_form))
+    http = setup_http
+    access_token = get_access_token(http, "topic.read")
+    @posts = Post.where(like: 1..100000, posted: Time.now().beginning_of_month..Time.now().end_of_month).order(like: :desc).page(params[:page]).per(10)
+
+    @posts.each do |post|
+      topic = Topic.find(post.topic_id)
+      res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+      if res != false
+        created_time = res['post']['createdAt']
+        created_time_to_time = Time.parse(created_time).in_time_zone
+
+        post_data = {
+            "post_id" => res['post']['id'],
+            "topic_id" => res['post']['topicId'],
+            "name" => res['post']['account']['fullName'],
+            "message" => res['post']['message'],
+            "like" => post.like,
+            "imageUrl" => res['post']['account']['imageUrl'],
+            "created_at" => created_time_to_time.to_s
+        }
+        @post_data.push(post_data)
+      else
+        topic.delete_post(post)
+        p "#{post.post_id.to_i} is empty"
+      end
+    end
+  end
+
+  #検索ボタンがクリックされた時の処理
+  def all_process
+    @topic_name = 'すべてのトピックの集計'
+    @post_data = Array.new
+    @form = TermFindForm.new(term_find_form_params)
+    render text: @form.from
     http = setup_http
     access_token = get_access_token(http, "topic.read")
     @posts = Post.where(like: 1..100000, posted: Time.now().beginning_of_month..Time.now().end_of_month).order(like: :desc).page(params[:page]).per(10)
@@ -264,6 +286,11 @@ class TopicsController < ApplicationController
   def topic_params
     params.require(:topic).permit(:topicId)
   end
+
+  def term_find_form_params
+    params.require(:term_find_form).permit(:from, :to)
+  end
+
 
   #typetalkのアクセストークンを生成する。
   def get_access_token(http, scope)
