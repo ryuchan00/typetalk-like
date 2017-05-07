@@ -7,11 +7,11 @@
     </div>
     <%= form_for @form, url: {action: :all_process} do |f| %>
         <p>
-          <%= f.label :from, '表示期間:' %>
+          <%= f.label :post_from, '表示期間:' %>
           <%#= f.datetime_select :from, :default => Time.now - 1.month %> 〜
-          <%= f.text_field :from, :default => Time.now - 1.month %> 〜
+          <%= f.datetime_select :post_from, :default => Time.now - 1.month %> 〜
           <%#= f.datetime_select :to %>
-          <%= f.text_field :to %>
+          <%= f.datetime_select :post_to %>
         </p>
         <p>
           <%= f.submit '検索する' %>
