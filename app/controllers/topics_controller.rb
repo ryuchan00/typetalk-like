@@ -123,9 +123,9 @@ class TopicsController < ApplicationController
   def all
     # @topic_name = 'すべてのトピックの集計'
     @form = TermFindForm.new
-    from = Time.now().beginning_of_month
-    to = Time.now().end_of_month
-    getAllPost(from, to)
+    @from = Time.now().beginning_of_month
+    @to = Time.now().end_of_month
+    getAllPost(@from, @to)
     # @post_data = Array.new
     # http = setup_http
     # access_token = get_access_token(http, "topic.read")
@@ -159,9 +159,9 @@ class TopicsController < ApplicationController
   def all_process
     # @topic_name = 'すべてのトピックの集計'
     @form = TermFindForm.new(params[:term_find_form].permit(:post_from, :post_to))
-    from = @form.post_from
-    to = @form.post_to
-    getAllPost(from, to)
+    @from = @form.post_from
+    @to = @form.post_to
+    getAllPost(@from, @to)
     # @post_data = Array.new
     # http = setup_http
     # access_token = get_access_token(http, "topic.read")
@@ -338,7 +338,7 @@ class TopicsController < ApplicationController
     @post_data = Array.new
     http = setup_http
     access_token = get_access_token(http, "topic.read")
-    @posts = Post.where(like: 1..100000, posted: from..to).order(like: :desc).page(params[:page]).per(10)
+    @posts = Post.where(like: 1..Float::INFINITY, posted: from..to).order(like: :desc).page(params[:page]).per(10)
 
     @posts.each do |post|
       topic = Topic.find(post.topic_id)
