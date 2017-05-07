@@ -121,74 +121,18 @@ class TopicsController < ApplicationController
 
   #全トピックの集計を表示
   def all
-    # @topic_name = 'すべてのトピックの集計'
     @form = TermFindForm.new
     @from = Time.now().beginning_of_month
     @to = Time.now().end_of_month
     getAllPost(@from, @to)
-    # @post_data = Array.new
-    # http = setup_http
-    # access_token = get_access_token(http, "topic.read")
-    # @posts = Post.where(like: 1..100000, posted: Time.now().beginning_of_month..Time.now().end_of_month).order(like: :desc).page(params[:page]).per(10)
-    #
-    # @posts.each do |post|
-    #   topic = Topic.find(post.topic_id)
-    #   res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-    #   if res != false
-    #     created_time = res['post']['createdAt']
-    #     created_time_to_time = Time.parse(created_time).in_time_zone
-    #
-    #     post_data = {
-    #         "post_id" => res['post']['id'],
-    #         "topic_id" => res['post']['topicId'],
-    #         "name" => res['post']['account']['fullName'],
-    #         "message" => res['post']['message'],
-    #         "like" => post.like,
-    #         "imageUrl" => res['post']['account']['imageUrl'],
-    #         "created_at" => created_time_to_time.to_s
-    #     }
-    #     @post_data.push(post_data)
-    #   else
-    #     topic.delete_post(post)
-    #     p "#{post.post_id.to_i} is empty"
-    #   end
-    # end
   end
 
   #検索ボタンがクリックされた時の処理
   def all_process
-    # @topic_name = 'すべてのトピックの集計'
     @form = TermFindForm.new(params[:term_find_form].permit(:post_from, :post_to))
     @from = @form.post_from
     @to = @form.post_to
     getAllPost(@from, @to)
-    # @post_data = Array.new
-    # http = setup_http
-    # access_token = get_access_token(http, "topic.read")
-    # @posts = Post.where(like: 1..100000, posted: @form.post_from..@form.post_to).order(like: :desc).page(params[:page]).per(10)
-    #
-    # @posts.each do |post|
-    #   topic = Topic.find(post.topic_id)
-    #   res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-    #   if res != false
-    #     created_time = res['post']['createdAt']
-    #     created_time_to_time = Time.parse(created_time).in_time_zone
-    #
-    #     post_data = {
-    #         "post_id" => res['post']['id'],
-    #         "topic_id" => res['post']['topicId'],
-    #         "name" => res['post']['account']['fullName'],
-    #         "message" => res['post']['message'],
-    #         "like" => post.like,
-    #         "imageUrl" => res['post']['account']['imageUrl'],
-    #         "created_at" => created_time_to_time.to_s
-    #     }
-    #     @post_data.push(post_data)
-    #   else
-    #     topic.delete_post(post)
-    #     p "#{post.post_id.to_i} is empty"
-    #   end
-    # end
     render :all
   end
 

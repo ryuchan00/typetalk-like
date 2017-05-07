@@ -1,0 +1,10 @@
+<%= form_for form, url: {action: :all_process} do |f| %>
+    <p>
+      <%= f.label :post_from, '表示期間:' %><br>
+      <%= f.datetime_select :post_from, :use_month_numbers => true, :default => Time.now - 1.month %> 〜<br>
+      <%= f.datetime_select :post_to, :use_month_numbers => true %>
+    </p>
+    <p>
+      <%= f.submit '検索する' %>
+    </p>
+<% end %>
