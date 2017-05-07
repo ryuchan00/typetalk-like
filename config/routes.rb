@@ -12,12 +12,21 @@ Rails.application.routes.draw do
   post 'receive', to: 'topics#receive'
 
   get 'topic_all', to: 'topics#all'
+  post 'topic_all/search', to: 'topics#all_process'
+  get 'topic_all/search', to: 'topics#all_process'
+
   get 'topics/all_post', to: 'topics#all_post'
+
   get 'topic_user', to: 'topics#user'
+  post 'topic_user/search', to: 'topics#user_process'
+  get 'topic_user/search', to: 'topics#user_process'
+
   get 'past_post', to: 'topics#past_post'
   post 'past_post', to: 'topics#past_post'
-  post 'all_process', to: 'topics#all_process'
-  get 'all_process', to: 'topics#all_process'
+
+  get 'topics/:id/search', to: 'topics#show_process'
+  post 'topics/:id/search', to: 'topics#show_process'
+
   get 'update_latest', to: 'topics#update_latest'
 
   #テストコード用

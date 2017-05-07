@@ -1,8 +1,8 @@
-<%= form_for form, url: {action: :all_process} do |f| %>
+<%= form_for form, :url => {:action => action} do |f| %>
     <p>
       <%= f.label :post_from, '表示期間:' %><br>
-      <%= f.datetime_select :post_from, :use_month_numbers => true, :default => Time.now - 1.month %> 〜<br>
-      <%= f.datetime_select :post_to, :use_month_numbers => true %>
+      <%= f.datetime_select :post_from, :use_month_numbers => true, :default => Time.now().beginning_of_month %> 〜<br>
+      <%= f.datetime_select :post_to, :use_month_numbers => true, :default => Time.now().end_of_month %>
     </p>
     <p>
       <%= f.submit '検索する' %>

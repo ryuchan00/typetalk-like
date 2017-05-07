@@ -5,6 +5,7 @@
         <h3 class="panel-title"><%= @topic_name %></h3>
       </div>
     </div>
+    <%= render 'term_find_form', form: @form, action: "user_process" %>
   </aside>
   <div class="col-md-8 col-xs-12">
     <ul class="media-list">
@@ -18,7 +19,7 @@
                 <%= post['fullName'] %>
               </div>
               <div>
-                <p class='col-xs-2 bg-danger'>イイネの数　<%= post['like'] %></p>
+                <p class='col-xs-3 bg-danger'>イイネの数❤　<%= post['like'] %></p>
               </div>
             </div>
           </li>

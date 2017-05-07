@@ -1,5 +1,19 @@
 class TopicsController < ApplicationController
-  before_action :require_user_logged_in, only: [:index, :show, :new, :create, :destroy, :all, :all_process, :user, :past_post, :update_latest]
+  before_action :require_user_logged_in, only: [
+      :index,
+      :show,
+      :show_process,
+      :new,
+      :create,
+      :destroy,
+      :all,
+      :all_process,
+      :user,
+      :user_process,
+      :past_post,
+      :update_latest
+  ]
+  before_action :existsTopic, only: [:show]
 
   # この↓一文がないとCSRFチェックでこけるので、APIをやりとりしているControllerには必要
   skip_before_filter :verify_authenticity_token
@@ -65,9 +79,9 @@ class TopicsController < ApplicationController
         if return_json.code == '200'
           topic_info = JSON.parse(return_json.body)
           @name.push({
-                         "id" => topic_info['topic']['id'].to_s,
-                         "name" => topic_info['topic']['name'].to_s,
-                         "updated_at" => topic.updated_at.in_time_zone
+                         'id' => topic_info['topic']['id'].to_s,
+                         'name' => topic_info['topic']['name'].to_s,
+                         'updated_at' => topic.updated_at.in_time_zone
                      })
         end
       end
@@ -75,48 +89,19 @@ class TopicsController < ApplicationController
   end
 
   def show
-    param_topic_id = params[:id]
-    if Topic.where(topicId: param_topic_id).exists?
-      topic = Topic.find_by(topicId: param_topic_id)
-      @posts = Post.where(like: 1..100000, topic_id: topic.id).order(like: :desc).page(params[:page]).per(10)
-    end
+    @form = TermFindForm.new
+    @from = Time.now().beginning_of_month
+    @to = Time.now().end_of_month
+    getShowList(@from, @to)
+  end
 
-    # setup a http client
-    http = setup_http
-
-    # get an access token
-    access_token = get_access_token(http, "topic.read")
-
-    # post a message
-    @post_data = Array.new
-    @posts.each do |post|
-      post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
-
-      if post_json != false
-        if @post_data.empty?
-          @topic_name = post_json['topic']['name']
-        end
-
-        if post_json['post']['likes'].count != 0 then
-          created_time = post_json['post']['createdAt']
-          created_time_to_time = Time.parse(created_time).in_time_zone
-
-          post_data = {
-              "post_id" => post_json['post']['id'],
-              "topic_id" => post_json['post']['topicId'],
-              "name" => post_json['post']['account']['fullName'],
-              "message" => post_json['post']['message'],
-              "like" => post.like,
-              "imageUrl" => post_json['post']['account']['imageUrl'],
-              "created_at" => created_time_to_time.to_s
-          }
-          @post_data.push(post_data)
-        end
-      else
-        topic.delete_post(post)
-        p "#{post.post_id.to_i} is empty"
-      end
-    end
+  #検索ボタンがクリックされた時の処理
+  def show_process
+    @form = TermFindForm.new(params[:term_find_form].permit(:post_from, :post_to))
+    @from = @form.post_from
+    @to = @form.post_to
+    getShowList(@from, @to)
+    render :show
   end
 
   #全トピックの集計を表示
@@ -137,24 +122,19 @@ class TopicsController < ApplicationController
   end
 
   def user
-    @topic_name = 'ユーザーごとの集計'
-    @post_data = Array.new
-    http = setup_http
-    access_token = get_access_token(http, "my")
-    @posts = Post.order("sum_like DESC").group(:post_user_name).sum(:like)
+    @form = TermFindForm.new
+    @from = Time.now().beginning_of_month
+    @to = Time.now().end_of_month
+    getUserLikeCount(@from, @to)
+  end
 
-    @posts.each do |name, like|
-      res = call_api(access_token, http, "/api/v1/accounts/profile/#{name}")
-      if res != false
-        post_data = {
-            'name' => name,
-            'fullName' => res['account']['fullName'],
-            'like' => like,
-            'imageUrl' => res['account']['imageUrl']
-        }
-        @post_data.push(post_data)
-      end
-    end
+  #検索ボタンがクリックされた時の処理
+  def user_process
+    @form = TermFindForm.new(params[:term_find_form].permit(:post_from, :post_to))
+    @from = @form.post_from
+    @to = @form.post_to
+    getUserLikeCount(@from, @to)
+    render :user
   end
 
   #対象トピックの過去200件のいいね数を取得
@@ -180,11 +160,10 @@ class TopicsController < ApplicationController
       end
       topic.updated_at = Time.now()
       topic.save
-      flash[:success] = '処理が終了しました。'
+      flash.now[:success] = "「#{res['topic']['name']}」の過去の投稿を取得しました。"
     else
-      flash[:success] = 'トピックが見つかりません、管理者に問い合わせてください。'
+      flash.now[:danger] = 'トピックが見つかりません、管理者に問い合わせてください。'
     end
-    redirect_to :back
   end
 
   def update_latest
@@ -207,8 +186,7 @@ class TopicsController < ApplicationController
         end
       end
     end
-    flash[:success] = '処理が終了しました。'
-    redirect_to :back
+    flash.now[:success] = 'トピックを最新の状態に更新しました。'
   end
 
   def new
@@ -236,10 +214,12 @@ class TopicsController < ApplicationController
     params.require(:topic).permit(:topicId)
   end
 
-  def term_find_form_params
-    params.require(:term_find_form).permit(:from, :to)
+  def existsTopic
+    unless Topic.exists?(topicId: params[:id])
+      flash[:danger] = 'トピックが見つかりませんでした。'
+      redirect_to root_path
+    end
   end
-
 
   #typetalkのアクセストークンを生成する。
   def get_access_token(http, scope)
@@ -301,6 +281,71 @@ class TopicsController < ApplicationController
             "created_at" => created_time_to_time.to_s
         }
         @post_data.push(post_data)
+      else
+        topic.delete_post(post)
+        p "#{post.post_id.to_i} is empty"
+      end
+    end
+  end
+
+  #ユーザーごとのいいね数を取得する。
+  def getUserLikeCount(from, to)
+    @topic_name = 'ユーザーごとの集計'
+    @post_data = Array.new
+    http = setup_http
+    access_token = get_access_token(http, "my")
+    @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).sum(:like)
+
+    @posts.each do |name, like|
+      res = call_api(access_token, http, "/api/v1/accounts/profile/#{name}")
+      if res != false
+        post_data = {
+            'name' => name,
+            'fullName' => res['account']['fullName'],
+            'like' => like,
+            'imageUrl' => res['account']['imageUrl']
+        }
+        @post_data.push(post_data)
+      end
+    end
+  end
+
+  def getShowList(from, to)
+    param_topic_id = params[:id]
+    topic = Topic.find_by(topicId: param_topic_id)
+    @posts = Post.where(like: 1..Float::INFINITY, topic_id: topic.id, posted: from..to).order(like: :desc).page(params[:page]).per(10)
+
+    # setup a http client
+    http = setup_http
+
+    # get an access token
+    access_token = get_access_token(http, "topic.read")
+
+    # post a message
+    @post_data = Array.new
+    @posts.each do |post|
+      post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
+
+      if post_json != false
+        if @post_data.empty?
+          @topic_name = post_json['topic']['name']
+        end
+
+        if post_json['post']['likes'].count != 0 then
+          created_time = post_json['post']['createdAt']
+          created_time_to_time = Time.parse(created_time).in_time_zone
+
+          post_data = {
+              'post_id' => post_json['post']['id'],
+              'topic_id' => post_json['post']['topicId'],
+              'name' => post_json['post']['account']['fullName'],
+              'message' => post_json['post']['message'],
+              'like' => post.like,
+              'imageUrl' => post_json['post']['account']['imageUrl'],
+              'created_at' => created_time_to_time.to_s
+          }
+          @post_data.push(post_data)
+        end
       else
         topic.delete_post(post)
         p "#{post.post_id.to_i} is empty"

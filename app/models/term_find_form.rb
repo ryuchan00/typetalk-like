@@ -15,5 +15,4 @@ class TermFindForm
     end
     super
   end
-
 end
