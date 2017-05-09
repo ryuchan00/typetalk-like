@@ -5,13 +5,13 @@
         <h3 class="panel-title"><%= @topic_name %></h3>
       </div>
     </div>
-    <p id="time"><%= @time %></p>
-    <%#= render 'relationships/follow_button', user: @user %>
+    <%= render 'term_find_form', form: @form, action: "all_process" %>
   </aside>
   <div class="col-md-8 col-xs-12">
-    <ul class="media-list" id="ajax_list">
-      <p>読み込み中...</p>
-      <%#= paginate @posts %>
-    </ul>
+    <h1><%= @from %>～<%= @to %>の集計</h1>
+
+    <%= render 'post_list', post_data: @post_data %>
+
+    <%= paginate @posts %>
   </div>
 </div>

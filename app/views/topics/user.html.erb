@@ -5,27 +5,25 @@
         <h3 class="panel-title"><%= @topic_name %></h3>
       </div>
     </div>
-    <%#= render 'relationships/follow_button', user: @user %>
+    <%= render 'term_find_form', form: @form, action: "user_process" %>
   </aside>
   <div class="col-md-8 col-xs-12">
     <ul class="media-list">
       <% @post_data.each do |post| %>
-          <% user = post["name"] %>
           <li class="media">
             <div class="media-left">
               <img class="media-object img-rounded" src="<%= post['imageUrl'] %>" alt="" height="50" width="50">
             </div>
             <div class="media-body">
               <div>
-                <%= user %>
+                <%= post['fullName'] %>
               </div>
               <div>
-                <p class='col-xs-2 bg-danger'>イイネの数　<%= post['like'] %></p>
+                <p class='col-xs-3 bg-danger'>イイネの数❤　<%= post['like'] %></p>
               </div>
             </div>
           </li>
       <% end %>
-      <%#= paginate @posts %>
     </ul>
   </div>
 </div>
