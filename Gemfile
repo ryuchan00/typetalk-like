@@ -20,6 +20,8 @@ gem 'uglifier', '>= 1.3.0'
 gem 'coffee-rails', '~> 4.2'
 # See https://github.com/rails/execjs#readme for more supported runtimes
 gem 'therubyracer', platforms: :ruby
+# DBからseedへダンプ
+gem 'seed_dump'
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
@@ -54,6 +56,8 @@ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 gem 'kaminari'
 gem 'dotenv-rails'
+gem 'resque'
+gem 'jquery-turbolinks'
 
 group :production do
   gem 'pg'

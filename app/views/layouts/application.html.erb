@@ -14,10 +14,11 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   </head>
 
-  <body>
-    <%= render 'layouts/navbar' %>
+  <body class="<%= controller_name -%> <%= action_name -%>">
+  <%= render 'layouts/navbar' %>
 
     <div class="container">
+      <div id="flash_ajax"></div>
       <%= render 'layouts/flash_messages' %>
 
       <%= yield %>

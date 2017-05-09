@@ -11,6 +11,28 @@ Rails.application.routes.draw do
   get 'receive', to: 'topics#receive'
   post 'receive', to: 'topics#receive'
 
+  get 'topic_all', to: 'topics#all'
+  post 'topic_all/search', to: 'topics#all_process'
+  get 'topic_all/search', to: 'topics#all_process'
+
+  get 'topics/all_post', to: 'topics#all_post'
+
+  get 'topic_user', to: 'topics#user'
+  post 'topic_user/search', to: 'topics#user_process'
+  get 'topic_user/search', to: 'topics#user_process'
+
+  get 'past_post', to: 'topics#past_post'
+  post 'past_post', to: 'topics#past_post'
+
+  get 'topics/:id/search', to: 'topics#show_process'
+  post 'topics/:id/search', to: 'topics#show_process'
+
+  get 'update_latest', to: 'topics#update_latest'
+
+  #テストコード用
+  # get 'keywd', to: 'record#keywd'
+  # post 'keywd_process', to: 'record#keywd_process'
+
   resources :users, only: [:index, :show, :new, :create] do
     # member do
     #   get :followings
