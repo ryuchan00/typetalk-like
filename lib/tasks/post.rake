@@ -30,9 +30,11 @@ namespace :post do
       req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
       req['Authorization'] = "Bearer #{access_token}"
       res = http.request(req)
+      # p res.body
       if res.code != '200'
         next
       end
+      res= JSON.parse(res.body)
 
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
