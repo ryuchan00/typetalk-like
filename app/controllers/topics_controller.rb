@@ -181,7 +181,7 @@ class TopicsController < ApplicationController
           post.posted = Time.parse(res_body['post']['createdAt']).in_time_zone
           post.save
         else
-          topic.delete_post(post)
+          # topic.delete_post(post)
           p "#{post.post_id.to_i} is empty"
         end
       end
@@ -282,7 +282,7 @@ class TopicsController < ApplicationController
         }
         @post_data.push(post_data)
       else
-        topic.delete_post(post)
+        # topic.delete_post(post)
         p "#{post.post_id.to_i} is empty"
       end
     end
@@ -347,7 +347,7 @@ class TopicsController < ApplicationController
           @post_data.push(post_data)
         end
       else
-        topic.delete_post(post)
+        # topic.delete_post(post)
         p "#{post.post_id.to_i} is empty"
       end
     end
