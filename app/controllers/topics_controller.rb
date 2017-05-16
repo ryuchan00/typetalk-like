@@ -47,7 +47,7 @@ class TopicsController < ApplicationController
       @post.topic = topic
       @post.post_id = post["post"]["id"].to_s
       @post.post_user_name = post["post"]["account"]["name"].to_s
-      @post.like = post['likes'].count
+      @post.like = post["post"]["likes"].count
       @post.posted = Time.parse(post['createdAt']).in_time_zone
       if @post.save
         p '投稿を登録しました。'
