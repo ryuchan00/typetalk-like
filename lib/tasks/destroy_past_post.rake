@@ -15,9 +15,12 @@ namespace :destroy_past_post do
             # t = Time.new(post.posted)
             # post.destroy if (Time.now > post.posted + 1.weeks.ago)
             p Time.now
+            puts Time.now.class
             p post.posted
-            p Time.parse(post.posted.to_s)
-            p post.posted + 1.weeks.ago
+            t = Time.parse(post.posted.to_s)
+            puts t.class
+            p t
+            p t - 2.week
             post.destroy if (Time.now > t + 1.weeks.ago)
         end
     end
