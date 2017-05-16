@@ -1,4 +1,5 @@
 # encoding: utf-8
+# http://konboi.hatenablog.com/entry/2013/11/22/182151
 
 require 'time'
 
