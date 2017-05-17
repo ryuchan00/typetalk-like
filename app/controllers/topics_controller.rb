@@ -63,27 +63,26 @@ class TopicsController < ApplicationController
 
   def index
     @user = current_user
-    @topics = Topic.all
-    http = setup_http
-    access_token = get_access_token(http, "topic.read")
-
     @name = Array.new
-    @imageUrl = Array.new
-
-    if access_token != false
-      @topics.each do |topic|
-        req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}/details")
-        req['Authorization'] = "Bearer #{access_token}"
-        return_json = http.request(req)
-
-        if return_json.code == '200'
-          topic_info = JSON.parse(return_json.body)
-          @name.push({
-                         'id' => topic_info['topic']['id'].to_s,
-                         'name' => topic_info['topic']['name'].to_s,
-                         'updated_at' => topic.updated_at.in_time_zone
-                     })
+    @imageUrl = Array.new #今は使っていない。この変数がないと、viewがエラーになる。
+    
+    http = setup_http
+    access_token = get_access_token(http, "my")
+    res = call_api(access_token, http, "/api/v1/topics")
+    p res
+    if res != false
+      res['topics'].each do |topic|
+        topic_data = Topic.find_or_create_by(topicId: topic["topic"]["id"].to_s)
+        if topic_data.updated_at.nil? then
+          date = topic_data.created_at.in_time_zone
+        else
+          date = topic_data.updated_at.in_time_zone
         end
+        @name.push({
+                       'id' => topic['topic']['id'].to_s,
+                       'name' => topic['topic']['name'].to_s,
+                       'updated_at' => date
+                   })
       end
     end
   end
