@@ -313,22 +313,24 @@ class TopicsController < ApplicationController
     param_topic_id = params[:id]
     topic = Topic.find_by(topicId: param_topic_id)
     @posts = Post.where(like: 1..Float::INFINITY, topic_id: topic.id, posted: from..to).order(like: :desc).page(params[:page]).per(10)
-
     # setup a http client
     http = setup_http
-
     # get an access token
     access_token = get_access_token(http, "topic.read")
-
-    # post a message
+    
+    topic_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/details")
+    if topic_json != false
+      @topic_name = topic_json['topic']['name']
+    end
+    
     @post_data = Array.new
     @posts.each do |post|
       post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
 
       if post_json != false
-        if @post_data.empty?
-          @topic_name = post_json['topic']['name']
-        end
+        # if @post_data.empty?
+        #   @topic_name = post_json['topic']['name']
+        # end
 
         if post_json['post']['likes'].count != 0 then
           created_time = post_json['post']['createdAt']
