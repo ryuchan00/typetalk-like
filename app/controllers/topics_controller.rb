@@ -88,6 +88,35 @@ class TopicsController < ApplicationController
   end
 
   def show
+    topic = Topic.find_by(topicId: params[:id])
+    # 初回アクセス時のみ過去200件を取得
+    if topic.created_at == topic.updated_at then
+      http = setup_http
+      access_token = get_access_token(http, "topic.read")
+      res = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+      if res != false
+        res['posts'].each do |post|
+          if Post.where(post_id: post['id']).exists? then
+            @post = Post.find_by(post_id: post['id'])
+            @post.like = post['likes'].count
+          else
+            @post = Post.new
+            @post.topic = topic
+            @post.post_id = post['id'].to_s
+            @post.post_user_name = post['account']['name'].to_s
+            @post.like = post['likes'].count
+            @post.posted = Time.parse(post['createdAt']).in_time_zone
+          end
+          @post.save
+        end
+        topic.updated_at = Time.now()
+        topic.save
+        flash.now[:success] = "「#{res['topic']['name']}」の過去の投稿を取得しました。"
+      else
+        flash.now[:danger] = 'トピックが見つかりません、管理者に問い合わせてください。'
+      end
+    end
+    
     @form = TermFindForm.new
     @from = Time.now().beginning_of_month
     @to = Time.now().end_of_month
@@ -328,10 +357,6 @@ class TopicsController < ApplicationController
       post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
 
       if post_json != false
-        # if @post_data.empty?
-        #   @topic_name = post_json['topic']['name']
-        # end
-
         if post_json['post']['likes'].count != 0 then
           created_time = post_json['post']['createdAt']
           created_time_to_time = Time.parse(created_time).in_time_zone
