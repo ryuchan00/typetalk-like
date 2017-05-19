@@ -10,6 +10,12 @@ class ApplicationController < ActionController::Base
       redirect_to login_url
     end
   end
+  
+  def confirm_user_logged_in
+    if logged_in?
+      redirect_to root_path
+    end
+  end
 
   def counts(user)
     @count_typetalks = user.typetalks.count

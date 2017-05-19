@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 namespace :post do
-  desc "1日ごとの投稿データを取得する。"
+  desc "投稿データを取得する。"
 
 # $ rake inactive_user:destroy_unconfirmed のように使う
 # :environmentは超大事。ないとモデルにアクセスできない
@@ -27,10 +27,9 @@ namespace :post do
     access_token = json['access_token']
 
     topics.each do |topic|
-      req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+      req = Net::HTTP::Get.new("/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
       req['Authorization'] = "Bearer #{access_token}"
       res = http.request(req)
-      # p res.body
       if res.code != '200'
         next
       end
@@ -39,26 +38,33 @@ namespace :post do
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
           @post = Post.find_by(post_id: post['id'])
+          if post['account']['isBot'] == true
+            @post.destroy if @post
+            next
+          end
           if post['account']['name'] == "sys_registration" then
             user = post['message'].match(%r{(.+?)さん*})[1]
-            p user
             @post.post_user_name = user
           else
             @post.post_user_name = post['account']['name'].to_s
           end
           @post.like = post['likes'].count
         else
+          if post['account']['isBot'] == true
+            next
+          end
           @post = Post.new
           @post.topic = topic
           @post.post_id = post['id'].to_s
-          #Cbase管理の人の一括管理を解消するため
+          
+          #Cbase管理の人の一括管理を解消するため、名前だけを正規表現で抽出
           if post['account']['name'] == "sys_registration" then
             user = post['message'].match(%r{(.+?)さん*})[1]
-            p user
             @post.post_user_name = user
           else
             @post.post_user_name = post['account']['name'].to_s
           end
+          
           @post.like = post['likes'].count
           @post.posted = Time.parse(post['createdAt']).in_time_zone
         end

@@ -93,7 +93,7 @@ class TopicsController < ApplicationController
     if topic.created_at == topic.updated_at then
       http = setup_http
       access_token = get_access_token(http, "topic.read")
-      res = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+      res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
       if res != false
         res['posts'].each do |post|
           if Post.where(post_id: post['id']).exists? then
@@ -171,7 +171,7 @@ class TopicsController < ApplicationController
     topic = Topic.find_by(topicId: params[:id])
     http = setup_http
     access_token = get_access_token(http, "topic.read")
-    res = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+    res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
     if res != false
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
@@ -322,25 +322,18 @@ class TopicsController < ApplicationController
   def getUserLikeCount(from, to)
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
+    page = Array.new
     http = setup_http
     access_token = get_access_token(http, "my")
-    # @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).page(params[:page]).per(10).sum(:like)
     @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).sum(:like)
-    # @posts = Post.where(posted: from..to).group(:post_user_name).page(params[:page]).per(10)
-    # @posts = Post.select(:post_user_name).group(:post_user_name)
-    # @posts = Post.select("post_user_name, sum(`like`) as likes").group(:post_user_name).page(params[:page]).per(10)
-    @post_test = Array.new
     @posts.each do |name, like|
-      @post_test.push({
+      page.push({
         name: name,
         like: like
       })
     end
-    p @post_test
-    @page_posts = Kaminari.paginate_array(@post_test).page(params[:page]).per(10)
-    # @page_posts = Kaminari.paginate_array(@posts).page(params[:page]).per(10)
+    @page_posts = Kaminari.paginate_array(page).page(params[:page]).per(20)
 
-    # @posts.each do |name, like|
     @page_posts.each do |post|
       # p post
       # p post[:name]
@@ -358,7 +351,7 @@ class TopicsController < ApplicationController
             'name' => post[:name],
             'fullName' => post[:name],
             'like' => post[:like],
-            'imageUrl' => ""
+            'imageUrl' => "http://4.bp.blogspot.com/-ioPIZDMxa54/ViipgnzbOXI/AAAAAAAAz6I/YVs_p9mT4lc/s800/tehepero6_youngwoman.png"
         }
         @post_data.push(post_data)
       end
