@@ -39,12 +39,26 @@ namespace :post do
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
           @post = Post.find_by(post_id: post['id'])
+          if post['account']['name'] == "sys_registration" then
+            user = post['message'].match(%r{(.+?)さん*})[1]
+            p user
+            @post.post_user_name = user
+          else
+            @post.post_user_name = post['account']['name'].to_s
+          end
           @post.like = post['likes'].count
         else
           @post = Post.new
           @post.topic = topic
           @post.post_id = post['id'].to_s
-          @post.post_user_name = post['account']['name'].to_s
+          #Cbase管理の人の一括管理を解消するため
+          if post['account']['name'] == "sys_registration" then
+            user = post['message'].match(%r{(.+?)さん*})[1]
+            p user
+            @post.post_user_name = user
+          else
+            @post.post_user_name = post['account']['name'].to_s
+          end
           @post.like = post['likes'].count
           @post.posted = Time.parse(post['createdAt']).in_time_zone
         end

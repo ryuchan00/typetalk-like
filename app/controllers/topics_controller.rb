@@ -149,6 +149,7 @@ class TopicsController < ApplicationController
     render :all
   end
 
+  #ユーザー毎のイイね数
   def user
     @form = TermFindForm.new
     @from = Time.now().beginning_of_month
@@ -286,11 +287,12 @@ class TopicsController < ApplicationController
 
   #全ての投稿を取得する。
   def getAllPost(from, to)
-    @topic_name = 'ユーザーごとの集計'
+    @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
     http = setup_http
     access_token = get_access_token(http, "topic.read")
     @posts = Post.where(like: 1..Float::INFINITY, posted: from..to).order(like: :desc).page(params[:page]).per(10)
+    p @posts
 
     @posts.each do |post|
       topic = Topic.find(post.topic_id)
@@ -322,16 +324,41 @@ class TopicsController < ApplicationController
     @post_data = Array.new
     http = setup_http
     access_token = get_access_token(http, "my")
+    # @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).page(params[:page]).per(10).sum(:like)
     @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).sum(:like)
-
+    # @posts = Post.where(posted: from..to).group(:post_user_name).page(params[:page]).per(10)
+    # @posts = Post.select(:post_user_name).group(:post_user_name)
+    # @posts = Post.select("post_user_name, sum(`like`) as likes").group(:post_user_name).page(params[:page]).per(10)
+    @post_test = Array.new
     @posts.each do |name, like|
-      res = call_api(access_token, http, "/api/v1/accounts/profile/#{name}")
+      @post_test.push({
+        name: name,
+        like: like
+      })
+    end
+    p @post_test
+    @page_posts = Kaminari.paginate_array(@post_test).page(params[:page]).per(10)
+    # @page_posts = Kaminari.paginate_array(@posts).page(params[:page]).per(10)
+
+    # @posts.each do |name, like|
+    @page_posts.each do |post|
+      # p post
+      # p post[:name]
+      res = call_api(access_token, http, "/api/v1/accounts/profile/#{post[:name].to_s}")
       if res != false
         post_data = {
-            'name' => name,
+            'name' => post[:name],
             'fullName' => res['account']['fullName'],
-            'like' => like,
+            'like' => post[:like],
             'imageUrl' => res['account']['imageUrl']
+        }
+        @post_data.push(post_data)
+      else
+        post_data = {
+            'name' => post[:name],
+            'fullName' => post[:name],
+            'like' => post[:like],
+            'imageUrl' => ""
         }
         @post_data.push(post_data)
       end
