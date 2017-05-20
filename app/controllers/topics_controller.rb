@@ -68,7 +68,7 @@ class TopicsController < ApplicationController
     http = setup_http
     access_token = get_access_token(http, "my")
     res = call_api(access_token, http, "/api/v1/topics")
-    
+
     if res != false
       res['topics'].each do |topic|
         topic_data = Topic.find_or_create_by(topicId: topic["topic"]["id"].to_s)
@@ -79,11 +79,11 @@ class TopicsController < ApplicationController
           date = topic_data.updated_at.in_time_zone
         end
         @topics.push({
-                       'id' => topic['topic']['id'].to_s,
-                       'name' => topic['topic']['name'].to_s,
-                       'updated_at' => date,
-                       'register' => topic_data.register
-                   })
+                         'id' => topic['topic']['id'].to_s,
+                         'name' => topic['topic']['name'].to_s,
+                         'updated_at' => date,
+                         'register' => topic_data.register
+                     })
       end
     end
   end
@@ -117,7 +117,7 @@ class TopicsController < ApplicationController
         flash.now[:danger] = 'トピックが見つかりません、管理者に問い合わせてください。'
       end
     end
-    
+
     @form = TermFindForm.new
     @from = Time.now().beginning_of_month
     @to = Time.now().end_of_month
@@ -218,23 +218,26 @@ class TopicsController < ApplicationController
     end
     flash.now[:success] = 'トピックを最新の状態に更新しました。'
   end
-  
+
   #トピックを記録対象にする
   def follow
-    topic = Topic.find_by(topicId: params[:id])
-    topic.register = "1"
-    topic.save
-    redirect_to root_path
+    @topic = Topic.find_by(topicId: params[:id])
+    @topic.register = "1"
+    @topic.save
+    # redirect_to root_path
   end
-  
+
   #トピックを記録対象外にする
   def unfollow
-    topic = Topic.find_by(topicId: params[:id])
-    topic.register = "0"
-    topic.save
-    posts = Post.where(topic: topic)
+    @topic = Topic.find_by(topicId: params[:id])
+    @topic.register = "0"
+    @topic.save
+    # if Post.where(topic: ).exists? then
+
+    # end
+    posts = Post.where(topic: @topic)
     posts.delete_all
-    redirect_to root_path
+    # redirect_to root_path
   end
 
   def new
@@ -347,9 +350,9 @@ class TopicsController < ApplicationController
     @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).sum(:like)
     @posts.each do |name, like|
       page.push({
-        name: name,
-        like: like
-      })
+                    name: name,
+                    like: like
+                })
     end
     @page_posts = Kaminari.paginate_array(page).page(params[:page]).per(20)
 
@@ -385,12 +388,12 @@ class TopicsController < ApplicationController
     http = setup_http
     # get an access token
     access_token = get_access_token(http, "topic.read")
-    
+
     topic_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/details")
     if topic_json != false
       @topic_name = topic_json['topic']['name']
     end
-    
+
     @post_data = Array.new
     @posts.each do |post|
       post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")

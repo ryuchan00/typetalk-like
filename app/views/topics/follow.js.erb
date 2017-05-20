@@ -1,0 +1,2 @@
+var follow = '<%= link_to 'フォロー中', topics_unfollow_path(:id => @topic.topicId), class: 'btn btn-sm btn-primary active', method: :post, remote: true %>'
+$("#follow_<%= @topic.topicId %>").html(follow);
