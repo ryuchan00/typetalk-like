@@ -63,25 +63,26 @@ class TopicsController < ApplicationController
 
   def index
     @user = current_user
-    @name = Array.new
+    @topics = Array.new
     @imageUrl = Array.new #今は使っていない。この変数がないと、viewがエラーになる。
-    
     http = setup_http
     access_token = get_access_token(http, "my")
     res = call_api(access_token, http, "/api/v1/topics")
-    p res
+    
     if res != false
       res['topics'].each do |topic|
         topic_data = Topic.find_or_create_by(topicId: topic["topic"]["id"].to_s)
+        #todo:この処理は、elseのみしか分岐していない様子なので、削除する
         if topic_data.updated_at.nil? then
           date = topic_data.created_at.in_time_zone
         else
           date = topic_data.updated_at.in_time_zone
         end
-        @name.push({
+        @topics.push({
                        'id' => topic['topic']['id'].to_s,
                        'name' => topic['topic']['name'].to_s,
-                       'updated_at' => date
+                       'updated_at' => date,
+                       'register' => topic_data.register
                    })
       end
     end
@@ -216,6 +217,24 @@ class TopicsController < ApplicationController
       end
     end
     flash.now[:success] = 'トピックを最新の状態に更新しました。'
+  end
+  
+  #トピックを記録対象にする
+  def follow
+    topic = Topic.find_by(topicId: params[:id])
+    topic.register = "1"
+    topic.save
+    redirect_to root_path
+  end
+  
+  #トピックを記録対象外にする
+  def unfollow
+    topic = Topic.find_by(topicId: params[:id])
+    topic.register = "0"
+    topic.save
+    posts = Post.where(topic: topic)
+    posts.delete_all
+    redirect_to root_path
   end
 
   def new

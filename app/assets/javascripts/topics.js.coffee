@@ -1,9 +1,9 @@
-$('.topics.all').ready ->
+# $('.topics.all').ready ->
 #  alert("test")
-$.ajax
-  url: 'topics/all_post'
-  type: 'GET'
-return
+# $.ajax
+#   url: 'topics/all_post'
+#   type: 'GET'
+# return
 #onload = ->
 #$.ajax
 #  url: 'topics/all_post'
