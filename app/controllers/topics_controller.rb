@@ -47,7 +47,7 @@ class TopicsController < ApplicationController
       @post.topic = topic
       @post.post_id = post["post"]["id"].to_s
       @post.post_user_name = post["post"]["account"]["name"].to_s
-      @post.like = post['likes'].count
+      @post.like = post["post"]["likes"].count
       @post.posted = Time.parse(post['createdAt']).in_time_zone
       if @post.save
         p '投稿を登録しました。'
@@ -63,32 +63,71 @@ class TopicsController < ApplicationController
 
   def index
     @user = current_user
-    @topics = Topic.all
+    @topics = Array.new
+    @imageUrl = Array.new #今は使っていない。この変数がないと、viewがエラーになる。
+    #Herokuのデータベースが1万レコードまでしか記録できないので、常に表示する。
+    @record_count = Topic.all.count + Post.all.count
     http = setup_http
-    access_token = get_access_token(http, "topic.read")
+    access_token = get_access_token(http, "my")
+    res = call_api(access_token, http, "/api/v1/topics")
 
-    @name = Array.new
-    @imageUrl = Array.new
-
-    if access_token != false
-      @topics.each do |topic|
-        req = Net::HTTP::Get.new("https://typetalk.in/api/v1/topics/#{topic.topicId}/details")
-        req['Authorization'] = "Bearer #{access_token}"
-        return_json = http.request(req)
-
-        if return_json.code == '200'
-          topic_info = JSON.parse(return_json.body)
-          @name.push({
-                         'id' => topic_info['topic']['id'].to_s,
-                         'name' => topic_info['topic']['name'].to_s,
-                         'updated_at' => topic.updated_at.in_time_zone
-                     })
+    if res != false
+      res['topics'].each do |topic|
+        topic_data = Topic.find_or_create_by(topicId: topic["topic"]["id"].to_s)
+        #todo:この処理は、elseのみしか分岐していない様子なので、削除する
+        if topic_data.updated_at.nil? then
+          date = topic_data.created_at.in_time_zone
+        else
+          date = topic_data.updated_at.in_time_zone
         end
+        
+        if topic_data.register == "1" then
+          from = Post.where(topic: topic_data).minimum(:posted)
+          to = Post.where(topic: topic_data).maximum(:posted)
+        end
+        
+        @topics.push({
+                         'id' => topic['topic']['id'].to_s,
+                         'name' => topic['topic']['name'].to_s,
+                         'updated_at' => date,
+                         'register' => topic_data.register,
+                         'from' => from,
+                         'to' => to
+                     })
       end
     end
   end
 
   def show
+    topic = Topic.find_by(topicId: params[:id])
+    # 初回アクセス時のみ過去200件を取得
+    if topic.created_at == topic.updated_at then
+      http = setup_http
+      access_token = get_access_token(http, "topic.read")
+      res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+      if res != false
+        res['posts'].each do |post|
+          if Post.where(post_id: post['id']).exists? then
+            @post = Post.find_by(post_id: post['id'])
+            @post.like = post['likes'].count
+          else
+            @post = Post.new
+            @post.topic = topic
+            @post.post_id = post['id'].to_s
+            @post.post_user_name = post['account']['name'].to_s
+            @post.like = post['likes'].count
+            @post.posted = Time.parse(post['createdAt']).in_time_zone
+          end
+          @post.save
+        end
+        topic.updated_at = Time.now()
+        topic.save
+        flash.now[:success] = "「#{res['topic']['name']}」の過去の投稿を取得しました。"
+      else
+        flash.now[:danger] = 'トピックが見つかりません、管理者に問い合わせてください。'
+      end
+    end
+
     @form = TermFindForm.new
     @from = Time.now().beginning_of_month
     @to = Time.now().end_of_month
@@ -121,6 +160,7 @@ class TopicsController < ApplicationController
     render :all
   end
 
+  #ユーザー毎のイイね数
   def user
     @form = TermFindForm.new
     @from = Time.now().beginning_of_month
@@ -142,7 +182,7 @@ class TopicsController < ApplicationController
     topic = Topic.find_by(topicId: params[:id])
     http = setup_http
     access_token = get_access_token(http, "topic.read")
-    res = call_api(access_token, http, "https://typetalk.in/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
+    res = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}?count=200&direction=backward")
     if res != false
       res['posts'].each do |post|
         if Post.where(post_id: post['id']).exists? then
@@ -181,12 +221,30 @@ class TopicsController < ApplicationController
           post.posted = Time.parse(res_body['post']['createdAt']).in_time_zone
           post.save
         else
-          topic.delete_post(post)
+          # topic.delete_post(post)
           p "#{post.post_id.to_i} is empty"
         end
       end
     end
     flash.now[:success] = 'トピックを最新の状態に更新しました。'
+  end
+
+  #トピックを記録対象にする
+  def follow
+    @topic = Topic.find_by(topicId: params[:id])
+    @topic.register = "1"
+    @topic.save
+  end
+
+  #トピックを記録対象外にする
+  def unfollow
+    @topic = Topic.find_by(topicId: params[:id])
+    @topic.register = "0"
+    @topic.save
+
+    # end
+    posts = Post.where(topic: @topic)
+    posts.delete_all
   end
 
   def new
@@ -258,11 +316,12 @@ class TopicsController < ApplicationController
 
   #全ての投稿を取得する。
   def getAllPost(from, to)
-    @topic_name = 'ユーザーごとの集計'
+    @topic_name = 'すべてのトピックの集計'
     @post_data = Array.new
     http = setup_http
     access_token = get_access_token(http, "topic.read")
     @posts = Post.where(like: 1..Float::INFINITY, posted: from..to).order(like: :desc).page(params[:page]).per(10)
+    p @posts
 
     @posts.each do |post|
       topic = Topic.find(post.topic_id)
@@ -282,7 +341,7 @@ class TopicsController < ApplicationController
         }
         @post_data.push(post_data)
       else
-        topic.delete_post(post)
+        # topic.delete_post(post)
         p "#{post.post_id.to_i} is empty"
       end
     end
@@ -292,18 +351,36 @@ class TopicsController < ApplicationController
   def getUserLikeCount(from, to)
     @topic_name = 'ユーザーごとの集計'
     @post_data = Array.new
+    page = Array.new
     http = setup_http
     access_token = get_access_token(http, "my")
     @posts = Post.where(posted: from..to).order("sum_like DESC").group(:post_user_name).sum(:like)
-
     @posts.each do |name, like|
-      res = call_api(access_token, http, "/api/v1/accounts/profile/#{name}")
+      page.push({
+                    name: name,
+                    like: like
+                })
+    end
+    @page_posts = Kaminari.paginate_array(page).page(params[:page]).per(20)
+
+    @page_posts.each do |post|
+      # p post
+      # p post[:name]
+      res = call_api(access_token, http, "/api/v1/accounts/profile/#{post[:name].to_s}")
       if res != false
         post_data = {
-            'name' => name,
+            'name' => post[:name],
             'fullName' => res['account']['fullName'],
-            'like' => like,
+            'like' => post[:like],
             'imageUrl' => res['account']['imageUrl']
+        }
+        @post_data.push(post_data)
+      else
+        post_data = {
+            'name' => post[:name],
+            'fullName' => post[:name],
+            'like' => post[:like],
+            'imageUrl' => "http://4.bp.blogspot.com/-ioPIZDMxa54/ViipgnzbOXI/AAAAAAAAz6I/YVs_p9mT4lc/s800/tehepero6_youngwoman.png"
         }
         @post_data.push(post_data)
       end
@@ -314,23 +391,21 @@ class TopicsController < ApplicationController
     param_topic_id = params[:id]
     topic = Topic.find_by(topicId: param_topic_id)
     @posts = Post.where(like: 1..Float::INFINITY, topic_id: topic.id, posted: from..to).order(like: :desc).page(params[:page]).per(10)
-
     # setup a http client
     http = setup_http
-
     # get an access token
     access_token = get_access_token(http, "topic.read")
 
-    # post a message
+    topic_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/details")
+    if topic_json != false
+      @topic_name = topic_json['topic']['name']
+    end
+
     @post_data = Array.new
     @posts.each do |post|
       post_json = call_api(access_token, http, "/api/v1/topics/#{topic.topicId}/posts/#{post.post_id.to_i}")
 
       if post_json != false
-        if @post_data.empty?
-          @topic_name = post_json['topic']['name']
-        end
-
         if post_json['post']['likes'].count != 0 then
           created_time = post_json['post']['createdAt']
           created_time_to_time = Time.parse(created_time).in_time_zone
@@ -347,7 +422,7 @@ class TopicsController < ApplicationController
           @post_data.push(post_data)
         end
       else
-        topic.delete_post(post)
+        # topic.delete_post(post)
         p "#{post.post_id.to_i} is empty"
       end
     end

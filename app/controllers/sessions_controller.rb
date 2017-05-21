@@ -1,5 +1,6 @@
 class SessionsController < ApplicationController
   def new
+    confirm_user_logged_in
   end
 
   def create
