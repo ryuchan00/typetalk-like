@@ -17,6 +17,12 @@
         </div>
       </li>
       <li class="media">
+        <div class="media-body">
+          <p>データベース使用状況</p>
+          <p><%= @record_count %>/10000</p>
+        </div>
+      </li>
+      <li class="media">
         <!--
         <div class="media-body">
           <p><%#= link_to 'すべてのトピックの情報を最新に更新する', update_latest_path, remote: true %></p>
@@ -48,8 +54,10 @@
                       <% end %>
                       </span>
                     </p>
-                    <p><%#= link_to '過去の投稿を取得する', past_post_path(:id => topic['id']), class: 'btn btn-sm btn-primary', method: :post, remote: true %>
-                      最終データ取得日：<%= topic['updated_at'] %></p>
+                    <p>最終データ取得日：<%= topic['updated_at'] %></p>
+                    <% unless topic['from'].nil? and topic['to'].nil? %>
+                    <p id="from_to">投稿保存期間：<%= topic['from'] %> ～ <%= topic['to'] %></p>
+                    <% end %>
                   </div>
                 </div>
               </div>

@@ -65,6 +65,8 @@ class TopicsController < ApplicationController
     @user = current_user
     @topics = Array.new
     @imageUrl = Array.new #今は使っていない。この変数がないと、viewがエラーになる。
+    #Herokuのデータベースが1万レコードまでしか記録できないので、常に表示する。
+    @record_count = Topic.all.count + Post.all.count
     http = setup_http
     access_token = get_access_token(http, "my")
     res = call_api(access_token, http, "/api/v1/topics")
@@ -78,11 +80,19 @@ class TopicsController < ApplicationController
         else
           date = topic_data.updated_at.in_time_zone
         end
+        
+        if topic_data.register == "1" then
+          from = Post.where(topic: topic_data).minimum(:posted)
+          to = Post.where(topic: topic_data).maximum(:posted)
+        end
+        
         @topics.push({
                          'id' => topic['topic']['id'].to_s,
                          'name' => topic['topic']['name'].to_s,
                          'updated_at' => date,
-                         'register' => topic_data.register
+                         'register' => topic_data.register,
+                         'from' => from,
+                         'to' => to
                      })
       end
     end
