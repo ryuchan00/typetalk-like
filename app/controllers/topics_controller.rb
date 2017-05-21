@@ -66,7 +66,7 @@ class TopicsController < ApplicationController
     @topics = Array.new
     @imageUrl = Array.new #今は使っていない。この変数がないと、viewがエラーになる。
     #Herokuのデータベースが1万レコードまでしか記録できないので、常に表示する。
-    @record_count = Topic.all.count + Post.all.count
+    @record_count = Topic.all.count + Post.all.count + User.all.count
     http = setup_http
     access_token = get_access_token(http, "my")
     res = call_api(access_token, http, "/api/v1/topics")
