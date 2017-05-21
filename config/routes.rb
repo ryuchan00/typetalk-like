@@ -24,7 +24,7 @@ Rails.application.routes.draw do
 
   get 'past_post', to: 'topics#past_post'
   post 'past_post', to: 'topics#past_post'
-  
+
   get 'topics/follow', to: 'topics#follow'
   post 'topics/follow', to: 'topics#follow'
   get 'topics/unfollow', to: 'topics#unfollow'
