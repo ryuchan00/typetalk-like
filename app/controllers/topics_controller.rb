@@ -224,7 +224,6 @@ class TopicsController < ApplicationController
     @topic = Topic.find_by(topicId: params[:id])
     @topic.register = "1"
     @topic.save
-    # redirect_to root_path
   end
 
   #トピックを記録対象外にする
@@ -232,12 +231,10 @@ class TopicsController < ApplicationController
     @topic = Topic.find_by(topicId: params[:id])
     @topic.register = "0"
     @topic.save
-    # if Post.where(topic: ).exists? then
 
     # end
     posts = Post.where(topic: @topic)
     posts.delete_all
-    # redirect_to root_path
   end
 
   def new
