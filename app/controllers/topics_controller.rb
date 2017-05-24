@@ -242,9 +242,8 @@ class TopicsController < ApplicationController
     @topic.register = "0"
     @topic.save
 
-    # end
-    posts = Post.where(topic: @topic)
-    posts.delete_all
+    # posts = Post.where(topic: @topic)
+    # posts.delete_all
   end
 
   def new
