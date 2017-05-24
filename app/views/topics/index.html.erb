@@ -56,7 +56,7 @@
                     </p>
                     <p>最終データ取得日：<%= topic['updated_at'] %></p>
                     <% unless topic['from'].nil? and topic['to'].nil? %>
-                    <p id="from_to">投稿保存期間：<%= topic['from'] %> ～ <%= topic['to'] %></p>
+                    <p id="from_to">投稿保存期間：<%= topic['from'].in_time_zone %> ～ <%= topic['to'].in_time_zone %></p>
                     <% end %>
                   </div>
                 </div>

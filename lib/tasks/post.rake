@@ -69,6 +69,10 @@ namespace :post do
           end
 
           @post.like = post['likes'].count
+          p "UTC時間"
+          p post['createdAt']
+          p "JST時間"
+          p post['createdAt'].in_time_zone
           @post.posted = Time.parse(post['createdAt']).in_time_zone
         end
         @post.save

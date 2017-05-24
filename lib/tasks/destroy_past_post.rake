@@ -12,7 +12,7 @@ namespace :destroy_past_post do
       logger = Logger.new('log/past_post.log')
       logger.info "#{Time.now} -- destroy_past_post -- #{post.to_yaml}"
       t = Time.parse(post.posted.to_s)
-      post.destroy if (Time.now.in_time_zone > t + 2.month)
+      post.destroy if (Time.now.in_time_zone > t + 3.month)
     end
   end
 end
