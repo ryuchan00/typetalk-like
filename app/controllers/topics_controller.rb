@@ -333,7 +333,8 @@ class TopicsController < ApplicationController
             "post_id" => res['post']['id'],
             "topic_id" => res['post']['topicId'],
             "name" => res['post']['account']['fullName'],
-            "message" => res['post']['message'],
+            # "message" => res['post']['message'],
+            "message" => "ダミー",
             "like" => post.like,
             "imageUrl" => res['post']['account']['imageUrl'],
             "created_at" => created_time_to_time.to_s
@@ -413,7 +414,8 @@ class TopicsController < ApplicationController
               'post_id' => post_json['post']['id'],
               'topic_id' => post_json['post']['topicId'],
               'name' => post_json['post']['account']['fullName'],
-              'message' => post_json['post']['message'],
+              # 'message' => post_json['post']['message'],
+              'message' => "ダミー",
               'like' => post.like,
               'imageUrl' => post_json['post']['account']['imageUrl'],
               'created_at' => created_time_to_time.to_s
